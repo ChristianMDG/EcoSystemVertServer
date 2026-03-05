@@ -1,0 +1,266 @@
+┌─────────────┐
+│    User     │
+├─────────────┤
+│ id          │ PK
+│ email       │
+│ password    │
+│ name        │
+│ role        │
+│ createdAt   │
+│ updatedAt   │
+├─────────────┤
+│ cart        │ 1-1 → Cart
+│ orders      │ 1-n → Order
+│ enrollments │ 1-n → Enrollment
+│ energyRequests │ 1-n → EnergyRequest
+│ energyProjects │ 1-n → EnergyProject
+│ coursesTaught │ 1-n → Course (trainer)
+└─────────────┘
+
+┌─────────────┐
+│  UserProfile│
+├─────────────┤
+│ id          │ PK
+│ userId      │ FK → User.id
+│ phone       │
+│ address     │
+│ city        │
+│ country     │
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘
+
+┌─────────────┐
+│   Cart      │
+├─────────────┤
+│ id          │ PK
+│ userId      │ FK → User.id (unique)
+│ createdAt   │
+│ updatedAt   │
+│ items       │ 1-n → CartItem
+└─────────────┘
+
+┌─────────────┐
+│  CartItem   │
+├─────────────┤
+│ id          │ PK
+│ cartId      │ FK → Cart.id
+│ productId   │ FK → Product.id
+│ quantity    │
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘
+
+┌─────────────┐
+│  Category   │
+├─────────────┤
+│ id          │ PK
+│ name        │
+│ description │
+│ products    │ 1-n → Product
+└─────────────┘
+
+┌─────────────┐
+│  Product    │
+├─────────────┤
+│ id          │ PK
+│ name        │
+│ price       │
+│ stock       │
+│ categoryId  │ FK → Category.id
+│ images      │ 1-n → ProductImage
+│ cartItems   │ 1-n → CartItem
+│ orderItems  │ 1-n → OrderItem
+└─────────────┘
+
+┌─────────────┐
+│ ProductImage│
+├─────────────┤
+│ id          │ PK
+│ productId   │ FK → Product.id
+│ imageUrl    │
+│ createdAt   │
+└─────────────┘
+
+┌─────────────┐
+│   Order     │
+├─────────────┤
+│ id          │ PK
+│ userId      │ FK → User.id
+│ totalPrice  │
+│ status      │
+│ createdAt   │
+│ updatedAt   │
+│ items       │ 1-n → OrderItem
+│ payment     │ 1-1 → Payment
+└─────────────┘
+
+┌─────────────┐
+│  OrderItem  │
+├─────────────┤
+│ id          │ PK
+│ orderId     │ FK → Order.id
+│ productId   │ FK → Product.id
+│ quantity    │
+│ price       │
+│ createdAt   │
+└─────────────┘
+
+┌─────────────┐
+│  Payment    │
+├─────────────┤
+│ id          │ PK
+│ orderId     │ FK → Order.id (unique)
+│ amount      │
+│ method      │
+│ status      │
+│ paymentDate │
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘
+
+┌─────────────┐
+│   Course    │
+├─────────────┤
+│ id          │ PK
+│ title       │
+│ description │
+│ price       │
+│ trainerId   │ FK → User.id
+│ lessons     │ 1-n → Lesson
+│ enrollments │ 1-n → Enrollment
+└─────────────┘
+
+┌─────────────┐
+│   Lesson    │
+├─────────────┤
+│ id          │ PK
+│ courseId    │ FK → Course.id
+│ title       │
+│ videoUrl    │
+│ content     │
+│ order       │
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘
+
+┌─────────────┐
+│ Enrollment  │
+├─────────────┤
+│ id          │ PK
+│ userId      │ FK → User.id
+│ courseId    │ FK → Course.id
+│ enrolledAt  │
+│ completedAt │
+└─────────────┘
+
+┌─────────────┐
+│ EnergySolution │
+├─────────────┤
+│ id          │ PK
+│ name        │
+│ description │
+│ powerOutput │
+│ estimatedCost │
+│ materials   │ 1-n → EnergyMaterial
+│ projects    │ 1-n → EnergyProject
+│ recommendations │ 1-n → EnergyRecommendation
+└─────────────┘
+
+┌─────────────┐
+│ EnergyMaterial │
+├─────────────┤
+│ id          │ PK
+│ solutionId  │ FK → EnergySolution.id
+│ name        │
+│ quantity    │
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘
+
+┌─────────────┐
+│ EnergyProject │
+├─────────────┤
+│ id          │ PK
+│ userId      │ FK → User.id
+│ solutionId  │ FK → EnergySolution.id
+│ locationId  │ FK → Location.id
+│ status      │
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘
+
+┌─────────────┐
+│ EnergyRequest │
+├─────────────┤
+│ id          │ PK
+│ userId      │ FK → User.id
+│ surface     │
+│ consumption │
+│ budget      │
+│ locationId  │ FK → Location.id
+│ recommendation │ 1-1 → EnergyRecommendation
+│ createdAt   │
+└─────────────┘
+
+┌─────────────┐
+│ EnergyRecommendation │
+├─────────────┤
+│ id          │ PK
+│ requestId   │ FK → EnergyRequest.id (unique)
+│ solutionId  │ FK → EnergySolution.id
+│ panelsNumber │
+│ batteryCapacity │
+│ estimatedCost │
+│ createdAt   │
+└─────────────┘
+
+┌─────────────┐
+│ WasteType   │
+├─────────────┤
+│ id          │ PK
+│ name        │
+│ solutions   │ 1-n → WasteSolution
+│ centers     │ 1-n → RecyclingCenter
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘
+
+┌─────────────┐
+│ WasteSolution │
+├─────────────┤
+│ id          │ PK
+│ wasteTypeId │ FK → WasteType.id
+│ solutionName│
+│ description │
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘
+
+┌─────────────┐
+│ RecyclingCenter │
+├─────────────┤
+│ id          │ PK
+│ name        │
+│ locationId  │ FK → Location.id
+│ wasteTypeId │ FK → WasteType.id
+│ contact     │
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘
+
+┌─────────────┐
+│ Location    │
+├─────────────┤
+│ id          │ PK
+│ country     │
+│ region      │
+│ city        │
+│ latitude    │
+│ longitude   │
+│ projects    │ 1-n → EnergyProject
+│ requests    │ 1-n → EnergyRequest
+│ centers     │ 1-n → RecyclingCenter
+│ createdAt   │
+│ updatedAt   │
+└─────────────┘

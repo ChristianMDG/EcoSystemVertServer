@@ -1,0 +1,13 @@
+// This is the initial schema with all 25 tables
+// We'll create migrations as we build each module
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+

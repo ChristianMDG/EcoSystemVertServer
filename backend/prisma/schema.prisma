@@ -1,5 +1,6 @@
-// This is the initial schema with all 25 tables
-// We'll create migrations as we build each module
+// prisma/schema.prisma
+// EcoVert Mada - Version 1.0.0
+// Toutes les 25 tables selon la documentation
 
 generator client {
   provider = "prisma-client-js"
@@ -10,4 +11,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ========================================
+// ENUMS
+// ========================================
 
+enum UserRole {
+  admin
+  client
+}
+
+// ========================================
+// MODULE AUTH & USERS
+// ========================================
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String
+  role          UserRole  @default(client)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+}

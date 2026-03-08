@@ -1,45 +1,33 @@
-import express, { Application, Request, Response, NextFunction } from 'express';
+import express, { Application, Request, Response } from 'express';
+import authRoutes from './routes/auth.routes';
+import { authMiddleware } from './middlewares/auth.middleware';
 import cors from 'cors';
-import { config } from './config/env';
-import { errorHandler, AppError } from './middlewares/errorHandler';
-import { logger } from './utils/logger';
+import { env } from './config/env';
+// Extend the Request interface to include user
+declare global {
+  namespace Express {
+    interface Request {
+      user?: any; // Adjust type as needed based on your user object
+    }
+  }
+}
 
 export const app: Application = express();
 
-// Middlewares de base
 app.use(cors({
-  origin: config.corsOrigin,
-  credentials: true
+  origin: env.CORS_ORIGIN,
+  credentials: true,
 }));
+app.use(express.json());
+app.use(authRoutes);
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Logging middleware
-app.use((req: Request, _res: Response, next: NextFunction) => {
-  logger.info(`${req.method} ${req.path}`);
-  next();
-});
-
-// Route de santé
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({
-    success: true,
-    message: 'EcoVert Mada API is running',
-    timestamp: new Date().toISOString(),
-    environment: config.nodeEnv
-  });
+    status: 'ok',
+    message: 'API is healthy',
+  })
 });
 
-// Routes API (seront ajoutées progressivement)
-// app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
-// etc.
-
-// Route 404 pour les routes non trouvées
-app.use('*', (req: Request, _res: Response, next: NextFunction) => {
-  next(new AppError(`Cannot find ${req.originalUrl} on this server`, 404));
+app.get('/profile', authMiddleware, (req, res) => {
+  res.json({ message: 'Profile info', user: req.user });
 });
-
-// Error handling middleware (doit être en dernier)
-app.use(errorHandler);

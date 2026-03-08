@@ -28,6 +28,9 @@ export default function Profile({ token }: { token: string }) {
         <div>
           <p>UserID: {user.userId}</p>
           <p>Email: {user.email}</p>
+            <p>Name: {user.name}</p>
+            <p>Role: {user.role}</p>
+            <p>Created At: {new Date(user.createdAt).toLocaleString()}</p>
         </div>
       ) : (
         <p>Loading...</p>

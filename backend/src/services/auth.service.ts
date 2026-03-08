@@ -27,8 +27,15 @@ export class AuthService {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) throw new Error('Invalid credentials');
 
+    // Créer JWT avec role et createdAt
     const token = jwt.sign(
-      { userId: user.id, email: user.email },
+      {
+        userId: user.id,
+        name : user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt.toISOString(),
+      },
       env.JWT_SECRET,
       { expiresIn: '1h' }
     );

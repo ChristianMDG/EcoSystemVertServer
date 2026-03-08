@@ -4,7 +4,10 @@ import { env } from '../config/env';
 
 interface JwtPayload {
   userId: string;
+  name : string;
   email: string;
+  role: string;       
+  createdAt: string;
 }
 
 // Helper pro pour gérer l’Unauthorized

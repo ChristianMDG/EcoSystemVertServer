@@ -10,9 +10,9 @@ export default function Login({ setToken }: { setToken: (token: string) => void 
     e.preventDefault();
     try {
       const res = await api.post('/auth/login', { email, password });
-      setToken(res.data.token); // stocker le token
+      setToken(res.data.token); 
       setMessage('Login successful');
-    } catch (err: any) {
+    } catch (err) {
       setMessage(err.response?.data?.message || 'Error');
     }
   };

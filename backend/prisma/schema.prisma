@@ -1,6 +1,5 @@
 // prisma/schema.prisma
-// EcoVert Mada - Version 1.0.0
-// Toutes les 25 tables selon la documentation
+// EcoVert Mada - Version 1.1.0
 
 generator client {
   provider = "prisma-client-js"
@@ -33,6 +32,7 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   refreshTokens RefreshToken[]
+  orders        Order[]   // <-- relation vers les commandes de l'utilisateur
 }
 
 model RefreshToken {
@@ -43,4 +43,40 @@ model RefreshToken {
   createdAt DateTime @default(now())
   expiresAt DateTime
   revoked   Boolean  @default(false)
+}
+
+// ========================================
+// MODULE PRODUCTS & ORDERS
+// ========================================
+
+model Product {
+  id          String      @id @default(uuid())
+  name        String
+  description String
+  price       Float
+  category    String
+  image       String?
+  stock       Int
+  createdAt   DateTime    @default(now())
+  orderItems  OrderItem[]
+}
+
+model Order {
+  id        String      @id @default(uuid())
+  total     Float
+  createdAt DateTime    @default(now())
+  items     OrderItem[]
+
+  user      User        @relation(fields: [userId], references: [id])
+  userId    String
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  order     Order    @relation(fields: [orderId], references: [id])
+  orderId   String
+  product   Product  @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int
+  price     Float
 }

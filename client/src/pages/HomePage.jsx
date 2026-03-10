@@ -23,7 +23,7 @@ export default function HomePage() {
 
   // États pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8; // Nombre de produits par page
+  const itemsPerPage = 8;
 
   // Récupération des produits
   useEffect(() => {
@@ -88,7 +88,7 @@ export default function HomePage() {
     }
 
     setFilteredProducts(result);
-    setCurrentPage(1); // Revenir à la première page après filtrage
+    setCurrentPage(1);
   }, [products, searchQuery, selectedCategory, priceRange, sortBy]);
 
   useEffect(() => {
@@ -97,7 +97,6 @@ export default function HomePage() {
 
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
 
-  // Calcul des produits à afficher selon la page courante
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * itemsPerPage,
@@ -118,7 +117,7 @@ export default function HomePage() {
 
   if (error) {
     return (
-      <div className="text-center p-8 text-red-600">
+      <div className="text-center py-12 text-red-600">
         {error}
         <button
           onClick={() => window.location.reload()}
@@ -132,16 +131,15 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero section minimaliste mais accueillante */}
+      {/* Hero section compacte */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-12 md:py-16 text-center">
-          <h1 className="text-4xl md:text-5xl font-light text-gray-900 mb-4">
+        <div className="container mx-auto px-4 py-8 md:py-12 text-center">
+          <h1 className="text-3xl md:text-4xl font-light text-gray-900 mb-2">
             Bienvenue{user ? `, ${user.name}` : ''}
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto mb-8">
+          <p className="text-base text-gray-600 max-w-2xl mx-auto mb-6">
             Découvrez une sélection de produits écologiques pour un quotidien plus durable.
           </p>
-          {/* Barre de recherche élégante */}
           <div className="max-w-xl mx-auto">
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
           </div>
@@ -149,9 +147,9 @@ export default function HomePage() {
       </div>
 
       {/* Section des produits */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-6">
         {/* Barre d'outils */}
-        <div className="flex flex-wrap items-center justify-between mb-6">
+        <div className="flex flex-wrap items-center justify-between mb-4">
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
             className="lg:hidden flex items-center gap-2 bg-white border border-gray-300 rounded-full px-4 py-2 text-sm font-medium text-gray-700 hover:shadow-md transition"
@@ -164,7 +162,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar filtres */}
           <FilterSidebar
             categories={categories}
@@ -179,7 +177,7 @@ export default function HomePage() {
           {/* Liste des produits */}
           <div className="flex-1">
             {filteredProducts.length === 0 ? (
-              <div className="text-center py-16">
+              <div className="text-center py-12">
                 <p className="text-gray-500 text-lg">Aucun produit ne correspond à vos critères.</p>
                 <button
                   onClick={() => {
@@ -195,10 +193,10 @@ export default function HomePage() {
               </div>
             ) : (
               <>
-                <p className="text-sm text-gray-500 mb-4">
+                <p className="text-sm text-gray-500 mb-3">
                   {filteredProducts.length} résultats (page {currentPage}/{totalPages})
                 </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {paginatedProducts.map(product => (
                     <ProductCard key={product.id} product={product} />
                   ))}
@@ -206,11 +204,11 @@ export default function HomePage() {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex justify-center items-center gap-2 mt-10">
+                  <div className="flex justify-center items-center gap-2 mt-8">
                     <button
                       onClick={() => goToPage(currentPage - 1)}
                       disabled={currentPage === 1}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Précédent
                     </button>
@@ -218,7 +216,7 @@ export default function HomePage() {
                       <button
                         key={page}
                         onClick={() => goToPage(page)}
-                        className={`px-4 py-2 border rounded-lg text-sm font-medium ${
+                        className={`px-3 py-1.5 border rounded-lg text-sm font-medium ${
                           currentPage === page
                             ? 'bg-green-600 text-white border-green-600'
                             : 'border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -230,7 +228,7 @@ export default function HomePage() {
                     <button
                       onClick={() => goToPage(currentPage + 1)}
                       disabled={currentPage === totalPages}
-                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       Suivant
                     </button>

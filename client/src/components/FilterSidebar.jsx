@@ -10,74 +10,102 @@ export default function FilterSidebar({
   onClose,
 }) {
   const content = (
-    <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-      <div className="flex justify-between items-center mb-4 lg:hidden">
-        <h3 className="text-lg font-medium text-gray-900">Filtres</h3>
-        <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-100">
-          <XMarkIcon className="h-6 w-6 text-gray-500" />
+    <div className="h-full bg-white p-6 border-r border-gray-200">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-gray-900">Filtres</h3>
+        <button
+          onClick={onClose}
+          className="lg:hidden p-2 rounded-full hover:bg-gray-100 transition-colors"
+          aria-label="Fermer"
+        >
+          <XMarkIcon className="h-5 w-5 text-gray-500" />
         </button>
       </div>
 
-      <div className="space-y-6">
-        {/* Filtre catégorie */}
+      <div className="space-y-8">
+        {/* Catégorie */}
         <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Catégorie</h4>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Catégorie
+          </label>
           <select
             value={selectedCategory}
             onChange={(e) => onCategoryChange(e.target.value)}
-            className="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
           >
-            <option value="">Toutes</option>
-            {categories.map(cat => (
-              <option key={cat} value={cat}>{cat}</option>
+            <option value="">Toutes les catégories</option>
+            {categories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
             ))}
           </select>
         </div>
 
-        {/* Filtre prix */}
+        {/* Prix */}
         <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-2">Prix (Ar)</h4>
-          <div className="flex gap-2">
-            <input
-              type="number"
-              placeholder="Min"
-              value={priceRange.min}
-              onChange={(e) => onPriceRangeChange({ ...priceRange, min: e.target.value })}
-              className="w-1/2 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-            <input
-              type="number"
-              placeholder="Max"
-              value={priceRange.max}
-              onChange={(e) => onPriceRangeChange({ ...priceRange, max: e.target.value })}
-              className="w-1/2 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Prix (Ar)
+          </label>
+          <div className="flex gap-3">
+            <div className="flex-1">
+              <input
+                type="number"
+                placeholder="Min"
+                value={priceRange.min}
+                onChange={(e) =>
+                  onPriceRangeChange({ ...priceRange, min: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+              />
+            </div>
+            <div className="flex-1">
+              <input
+                type="number"
+                placeholder="Max"
+                value={priceRange.max}
+                onChange={(e) =>
+                  onPriceRangeChange({ ...priceRange, max: e.target.value })
+                }
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Bouton réinitialiser */}
+        {/* Réinitialiser */}
         <button
           onClick={() => {
             onCategoryChange('');
             onPriceRangeChange({ min: '', max: '' });
           }}
-          className="text-sm text-green-600 hover:underline"
+          className="text-sm text-green-600 hover:text-green-700 font-medium transition-colors inline-flex items-center gap-1"
         >
-          Réinitialiser
+          <span>Réinitialiser les filtres</span>
         </button>
       </div>
     </div>
   );
 
-  // Version desktop : toujours visible
+  // Desktop : fixe à gauche
   if (!isOpen) {
-    return <div className="hidden lg:block w-64">{content}</div>;
+    return (
+      <aside className="hidden lg:block w-72 flex-shrink-0 sticky top-20 self-start max-h-screen overflow-y-auto">
+        {content}
+      </aside>
+    );
   }
 
-  // Version mobile : overlay
+  // Mobile : overlay
   return (
-    <div className="fixed inset-0 z-50 bg-black bg-opacity-50 lg:hidden">
-      <div className="absolute right-0 top-0 h-full w-80 bg-white p-4 overflow-y-auto">
+    <div className="fixed inset-0 z-50 lg:hidden">
+      {/* Overlay sombre avec fermeture au clic */}
+      <div
+        className="absolute inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      />
+      {/* Panneau latéral */}
+      <div className="absolute right-0 top-0 h-full w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out">
         {content}
       </div>
     </div>

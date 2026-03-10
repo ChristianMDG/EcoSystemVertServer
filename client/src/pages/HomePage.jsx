@@ -21,6 +21,10 @@ export default function HomePage() {
   const [sortBy, setSortBy] = useState('relevance');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
+  // États pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8; // Nombre de produits par page
+
   // Récupération des produits
   useEffect(() => {
     const fetchProducts = async () => {
@@ -84,6 +88,7 @@ export default function HomePage() {
     }
 
     setFilteredProducts(result);
+    setCurrentPage(1); // Revenir à la première page après filtrage
   }, [products, searchQuery, selectedCategory, priceRange, sortBy]);
 
   useEffect(() => {
@@ -91,6 +96,17 @@ export default function HomePage() {
   }, [applyFilters]);
 
   const categories = [...new Set(products.map(p => p.category).filter(Boolean))];
+
+  // Calcul des produits à afficher selon la page courante
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const goToPage = (page) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
 
   if (loading) {
     return (
@@ -179,12 +195,47 @@ export default function HomePage() {
               </div>
             ) : (
               <>
-                <p className="text-sm text-gray-500 mb-4">{filteredProducts.length} résultats</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  {filteredProducts.length} résultats (page {currentPage}/{totalPages})
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredProducts.map(product => (
+                  {paginatedProducts.map(product => (
                     <ProductCard key={product.id} product={product} />
                   ))}
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center gap-2 mt-10">
+                    <button
+                      onClick={() => goToPage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Précédent
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                      <button
+                        key={page}
+                        onClick={() => goToPage(page)}
+                        className={`px-4 py-2 border rounded-lg text-sm font-medium ${
+                          currentPage === page
+                            ? 'bg-green-600 text-white border-green-600'
+                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {page}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => goToPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Suivant
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>

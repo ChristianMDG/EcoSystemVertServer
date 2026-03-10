@@ -1,20 +1,43 @@
+// import { useState } from 'react';
+// import { useAuth } from '../context/AuthContext';
+// import { useNavigate } from 'react-router-dom';
+
+// export default function LoginPage() {
+//   const [email, setEmail] = useState('');
+//   const [password, setPassword] = useState('');
+//   const { login } = useAuth();
+//   const navigate = useNavigate();
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     try {
+//       await login(email, password);
+//       navigate('/');
+//     } catch (error) {
+//       alert('Erreur de connexion');
+//     }
+//   };
+
+//   return (
+//     <div className="max-w-md mx-auto mt-10">
+//       <h1 className="text-2xl font-bold mb-4">Connexion</h1>
+//       <form onSubmit={handleSubmit} className="space-y-4">
+//         <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border p-2 rounded" required />
+//         <input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} className="w-full border p-2 rounded" required />
+//         <button type="submit" className="w-full bg-green-600 text-white p-2 rounded">Se connecter</button>
+//       </form>
+//     </div>
+//   );
+// }
+
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Leaf,
-  Sun,
-  Mail,
-  Lock,
-  LogIn,
-  Wind,
-  Droplets,
-  ArrowRight,
-  Battery,
-  Zap,
-  TreePine
+  Leaf, Sun, Mail, Lock, LogIn, Wind, Droplets, ArrowRight,
+  Battery, Zap, TreePine
 } from 'lucide-react';
-import api from '../services/api'; // Correction : chemin correct vers l'API
+import { useAuth } from '../context/AuthContext'; // Utilisation du contexte
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -22,16 +45,14 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth(); // Récupération de la fonction login du contexte
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const res = await api.post('/auth/login', { email, password });
-      localStorage.setItem('accessToken', res.data.accessToken);
-      localStorage.setItem('refreshToken', res.data.refreshToken);
-      alert('Connexion réussie ! Bienvenue sur EcoVert Mada 🌿');
-      navigate('/'); // Redirection vers l'accueil
+      await login(email, password);
+      navigate('/');
     } catch (err) {
       alert(err.response?.data?.message || "Email ou mot de passe incorrect");
     } finally {
@@ -40,102 +61,100 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden flex">
+    <div className="min-h-screen bg-white relative overflow-hidden flex flex-col md:flex-row">
       {/* Partie Gauche - Formulaire */}
-      <div className="w-1/2 flex items-center justify-center p-8 relative z-10 bg-white">
+      <div className="w-full md:w-1/2 flex items-center justify-center p-4 sm:p-8 relative z-10 bg-white">
         <motion.div
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
           className="w-full max-w-md"
         >
-          {/* Carte de connexion */}
-          <div className="bg-white rounded-3xl p-8">
+          <div className="bg-white rounded-3xl p-6 sm:p-8">
             {/* Logo et en-tête */}
-            <div className="text-center mb-8">
+            <div className="text-center mb-6 sm:mb-8">
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 260, damping: 20 }}
                 className="flex justify-center mb-4"
               >
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-4 rounded-2xl shadow-lg">
-                  <Leaf className="text-white" size={48} />
+                <div className="bg-gradient-to-r from-green-500 to-emerald-600 p-3 sm:p-4 rounded-2xl shadow-lg">
+                  <Leaf className="text-white" size={40} />
                 </div>
               </motion.div>
-
-              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
                 EcoVert Mada
               </h1>
-              <p className="text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600">
                 Connectez-vous à votre espace vert
               </p>
             </div>
 
             {/* Message de bienvenue */}
-            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 mb-6 border border-green-100">
-              <p className="text-green-800 text-sm text-center">
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-3 sm:p-4 mb-4 sm:mb-6 border border-green-100">
+              <p className="text-green-800 text-xs sm:text-sm text-center">
                 🌿 Heureux de vous revoir ! Ensemble pour un Madagascar plus vert
               </p>
             </div>
 
             {/* Formulaire */}
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Adresse email
                 </label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   <input
                     type="email"
                     placeholder="exemple@ecovert.mg"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-all"
+                    className="w-full pl-10 pr-4 py-2 sm:py-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-all"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Mot de passe
                 </label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-all"
+                    className="w-full pl-10 pr-12 py-2 sm:py-3 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-400 focus:border-transparent outline-none transition-all"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 text-sm"
                   >
                     {showPassword ? "👁️" : "👁️‍🗨️"}
                   </button>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-0">
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     id="remember"
                     className="w-4 h-4 text-green-500 rounded focus:ring-green-400"
                   />
-                  <label htmlFor="remember" className="text-sm text-gray-600">
+                  <label htmlFor="remember" className="text-xs sm:text-sm text-gray-600">
                     Se souvenir de moi
                   </label>
                 </div>
                 <Link
                   to="/forgot-password"
-                  className="text-sm text-green-600 hover:text-green-700 font-medium hover:underline"
+                  className="text-xs sm:text-sm text-green-600 hover:text-green-700 font-medium hover:underline"
                 >
                   Mot de passe oublié ?
                 </Link>
@@ -146,54 +165,54 @@ export default function Login() {
                 disabled={isLoading}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-70"
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white py-2 sm:py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center space-x-2 disabled:opacity-70 text-sm sm:text-base"
               >
                 {isLoading ? (
-                  <div className="w-6 h-6 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
                 ) : (
                   <>
-                    <LogIn size={20} />
+                    <LogIn size={18} />
                     <span>Se connecter</span>
                   </>
                 )}
               </motion.button>
 
-              <p className="text-center text-gray-600 mt-6">
+              <p className="text-center text-gray-600 mt-4 sm:mt-6 text-xs sm:text-sm">
                 Pas encore de compte ?{' '}
                 <Link
                   to="/register"
                   className="text-green-600 hover:text-green-700 font-semibold hover:underline transition-all inline-flex items-center space-x-1"
                 >
                   <span>Créer un compte</span>
-                  <ArrowRight size={16} />
+                  <ArrowRight size={14} />
                 </Link>
               </p>
 
-              <div className="relative my-6">
+              <div className="relative my-4 sm:my-6">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200"></div>
                 </div>
-                <div className="relative flex justify-center text-sm">
+                <div className="relative flex justify-center text-xs">
                   <span className="px-4 bg-white text-gray-500">Ou continuer avec</span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="flex items-center justify-center space-x-2 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                  <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-                  <span className="text-sm text-gray-600">Google</span>
+                  <img src="https://www.google.com/favicon.ico" alt="Google" className="w-4 h-4" />
+                  <span className="text-xs sm:text-sm text-gray-600">Google</span>
                 </motion.button>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="flex items-center justify-center space-x-2 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
                 >
-                  <img src="https://www.facebook.com/favicon.ico" alt="Facebook" className="w-5 h-5" />
-                  <span className="text-sm text-gray-600">Facebook</span>
+                  <img src="https://www.facebook.com/favicon.ico" alt="Facebook" className="w-4 h-4" />
+                  <span className="text-xs sm:text-sm text-gray-600">Facebook</span>
                 </motion.button>
               </div>
             </form>
@@ -201,9 +220,9 @@ export default function Login() {
         </motion.div>
       </div>
 
-      {/* Partie Droite - Hero */}
-      <div className="w-1/2 relative bg-gradient-to-br from-green-600 to-emerald-700 overflow-hidden">
-        {/* Éléments décoratifs */}
+      {/* Partie Droite - Hero (cachée sur mobile) */}
+      <div className="hidden md:block md:w-1/2 relative bg-gradient-to-br from-green-600 to-emerald-700 overflow-hidden">
+        {/* Éléments décoratifs (inchangés) */}
         <div className="absolute inset-0">
           <div className="absolute top-20 right-20 text-white/30 animate-float">
             <Sun size={80} />
@@ -219,7 +238,6 @@ export default function Login() {
           </div>
         </div>
 
-        {/* Contenu de la partie droite */}
         <div className="relative z-10 h-full flex flex-col items-center justify-center text-white p-12">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -227,14 +245,10 @@ export default function Login() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="text-center max-w-lg"
           >
-            <h2 className="text-4xl font-bold mb-6">
-              Énergies Renouvelables
-            </h2>
+            <h2 className="text-4xl font-bold mb-6">Énergies Renouvelables</h2>
             <p className="text-xl mb-8 text-green-100">
               Plateforme intelligente pour un avenir durable à Madagascar
             </p>
-
-            {/* Statistiques */}
             <div className="grid grid-cols-2 gap-6 mb-10">
               <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
                 <Battery className="w-10 h-10 mx-auto mb-3 text-yellow-300" />
@@ -247,8 +261,6 @@ export default function Login() {
                 <div className="text-sm text-green-200">Installations</div>
               </div>
             </div>
-
-            {/* Avantages */}
             <div className="space-y-4 text-left bg-white/10 backdrop-blur-sm rounded-2xl p-6">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-green-300 rounded-full"></div>
@@ -267,20 +279,13 @@ export default function Login() {
                 <span>Communauté eco-responsable</span>
               </div>
             </div>
-
-            {/* Badge Madagascar */}
             <div className="mt-8 inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">
-              <img
-                src="https://flagcdn.com/w40/mg.png"
-                alt="Madagascar"
-                className="w-6 h-4 rounded"
-              />
+              <img src="https://flagcdn.com/w40/mg.png" alt="Madagascar" className="w-6 h-4 rounded" />
               <span className="text-sm">Fièrement malgache</span>
             </div>
           </motion.div>
         </div>
 
-        {/* Vague décorative en bas */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320" className="w-full h-auto opacity-20">
             <path fill="#ffffff" fillOpacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,154.7C960,171,1056,181,1152,170.7C1248,160,1344,128,1392,112L1440,96L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>

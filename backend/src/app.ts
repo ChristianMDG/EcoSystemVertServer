@@ -13,7 +13,7 @@ declare global {
 }
 
 export const app: Application = express();
-
+app.use("/uploads", express.static("uploads"));
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(authRoutes);

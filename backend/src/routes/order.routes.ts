@@ -8,6 +8,6 @@ router.use(authMiddleware);
 
 // Utiliser les bons noms
 router.get("/orders",authorize(['admin', 'client']), orderController.getOrdersController);     
-router.get("/orders/:id",authorize(['admin', 'client']), orderController.getOrderByIdController);    // GET une commande précise
+router.get("/orders/:id",authorize(['admin', 'client']), orderController.getOrderByIdController);
 router.post("/orders" ,authorize(['admin', 'client']), orderController.createOrderController);    
 export default router;

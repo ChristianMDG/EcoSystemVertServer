@@ -66,13 +66,17 @@ export const updateProductController = async (req: Request, res: Response) => {
     if (req.user.role !== "admin") return res.status(403).json({ error: "Forbidden" });
 
     const data = updateProductSchema.parse(req.body);
+
+    if (req.file) {
+      data.image = `/uploads/products/${req.file.filename}`;
+    }
+
     const product = await productService.updateProduct(req.params.id, data);
     return res.json(product);
   } catch (err: any) {
     return res.status(400).json({ error: err.message });
   }
 };
-
 
 export const deleteProductController = async (req: Request, res: Response) => {
   try {

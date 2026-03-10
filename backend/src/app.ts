@@ -20,6 +20,8 @@ app.use(authRoutes);
 app.use(productRoutes);
 app.use(orderRoutes);
 
+
+
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'API is healthy' });
 });

@@ -131,16 +131,10 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero section compacte */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="container mx-auto px-4 py-8 md:py-12 text-center">
-          <h1 className="text-3xl md:text-4xl font-light text-gray-900 mb-2">
-            Bienvenue{user ? `, ${user.name}` : ''}
-          </h1>
-          <p className="text-base text-gray-600 max-w-2xl mx-auto mb-6">
-            Découvrez une sélection de produits écologiques pour un quotidien plus durable.
-          </p>
-          <div className="max-w-xl mx-auto">
+      {/* Barre de recherche persistante */}
+      <div className="sticky top-[72px] z-40 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="max-w-2xl mx-auto">
             <SearchBar value={searchQuery} onChange={setSearchQuery} />
           </div>
         </div>

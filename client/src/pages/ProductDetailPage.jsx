@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ShoppingCart, 
   Star, 
@@ -9,18 +9,29 @@ import {
   Leaf, 
   ChevronLeft,
   Heart,
-  Share2
+  Share2,
+  Check,
+  ArrowRight,
+  Sparkles,
+  PackageCheck,
+  Recycle,
+  Sun,
+  Wind
 } from 'lucide-react';
 import { getProductById, getProducts } from '../services/api';
 import ProductCard from '../components/ProductCard';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [showAddedMessage, setShowAddedMessage] = useState(false);
+  const [activeTab, setActiveTab] = useState('description');
 
   // Simulation de notes et avis
   const rating = 4.5;
@@ -31,7 +42,8 @@ export default function ProductDetailPage() {
       try {
         const { data } = await getProductById(id);
         setProduct(data);
-        // Charger des produits similaires (même catégorie)
+        
+        // Charger des produits similaires
         const similarRes = await getProducts({ category: data.category, limit: 4 });
         let similarData = similarRes.data;
         if (Array.isArray(similarData)) {
@@ -48,229 +60,426 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
+  const handleAddToCart = () => {
+    setShowAddedMessage(true);
+    setTimeout(() => setShowAddedMessage(false), 3000);
+  };
+
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-green-600"></div>
+      <div className="flex justify-center items-center min-h-[70vh]">
+        <div className="relative">
+          <div className="animate-spin rounded-full h-24 w-24 border-t-4 border-b-4 border-green-600"></div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Leaf className="h-8 w-8 text-green-600 animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="text-center py-16">
-        <Leaf className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Produit non trouvé</h2>
-        <p className="text-gray-600 mb-6">Le produit que vous recherchez n'existe pas ou a été retiré.</p>
-        <Link
-          to="/products"
-          className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
-        >
-          <ChevronLeft size={20} />
-          Retour aux produits
-        </Link>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="text-center py-20"
+      >
+        <div className="max-w-md mx-auto">
+          <div className="bg-red-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Leaf className="h-12 w-12 text-red-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Produit non trouvé</h2>
+          <p className="text-gray-600 mb-8">Le produit que vous recherchez n'existe pas ou a été retiré.</p>
+          <button
+            onClick={() => navigate(-1)}
+            className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition shadow-lg hover:shadow-xl"
+          >
+            <ChevronLeft size={20} />
+            Retour
+          </button>
+        </div>
+      </motion.div>
     );
   }
 
-  // Générer une URL d'image absolue si nécessaire
   const imageUrl = product.image?.startsWith('http')
     ? product.image
     : `${import.meta.env.VITE_API_URL}${product.image || product.imageUrl}`;
 
-  // Images simulées (si le produit n'a qu'une image, on la duplique pour l'exemple)
-  const images = [imageUrl, imageUrl, imageUrl]; // À remplacer par un vrai tableau si disponible
+  const images = [imageUrl, imageUrl, imageUrl];
 
   return (
-    <div className="bg-gray-50 min-h-screen py-8">
-      <div className="container mx-auto px-4">
-        {/* Fil d'Ariane */}
-        <div className="mb-6">
-          <nav className="flex text-sm text-gray-500">
-            <Link to="/" className="hover:text-green-600">Accueil</Link>
-            <span className="mx-2">/</span>
-            <Link to="/products" className="hover:text-green-600">Produits</Link>
-            <span className="mx-2">/</span>
-            <span className="text-gray-800 font-medium">{product.name}</span>
-          </nav>
-        </div>
+    <div className="bg-white min-h-screen">
+      <div className="container mx-auto px-4 py-6 lg:py-10">
+        {/* Fil d'Ariane amélioré */}
+        <nav className="flex items-center text-sm text-gray-500 mb-8 overflow-x-auto pb-2">
+          <Link to="/" className="hover:text-green-600 transition-colors flex items-center gap-1">
+            Accueil
+          </Link>
+          <ChevronRightIcon className="w-4 h-4 mx-2 text-gray-400" />
+          <Link to="/products" className="hover:text-green-600 transition-colors whitespace-nowrap">
+            Produits
+          </Link>
+          <ChevronRightIcon className="w-4 h-4 mx-2 text-gray-400" />
+          <Link 
+            to={`/products?category=${product.category}`}
+            className="hover:text-green-600 transition-colors whitespace-nowrap"
+          >
+            {product.category}
+          </Link>
+          <ChevronRightIcon className="w-4 h-4 mx-2 text-gray-400" />
+          <span className="text-gray-800 font-medium truncate max-w-[200px]">
+            {product.name}
+          </span>
+        </nav>
+
+        {/* Message d'ajout au panier */}
+        <AnimatePresence>
+          {showAddedMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="fixed top-24 right-4 z-50 bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3"
+            >
+              <Check size={20} />
+              <span>Produit ajouté au panier !</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Produit principal */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden mb-12">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-3xl shadow-xl overflow-hidden mb-12 border border-gray-100"
+        >
           <div className="grid lg:grid-cols-2 gap-8 p-6 lg:p-10">
-            {/* Galerie d'images */}
+            {/* Galerie d'images améliorée */}
             <div className="space-y-4">
-              <div className="aspect-w-2 aspect-h-2 bg-gray-100 rounded-xl overflow-hidden">
-                <img
+              <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden group">
+                <motion.img
+                  key={selectedImage}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
                   src={images[selectedImage]}
                   alt={product.name}
-                  className="w-full h-96 object-cover"
+                  className="w-full h-[500px] object-cover group-hover:scale-105 transition-transform duration-500"
                 />
+                <div className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
+                  <Sparkles size={14} />
+                  Éco-friendly
+                </div>
               </div>
+              
               {images.length > 1 && (
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-3">
                   {images.map((img, idx) => (
-                    <button
+                    <motion.button
                       key={idx}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => setSelectedImage(idx)}
-                      className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden border-2 transition ${
-                        selectedImage === idx ? 'border-green-600' : 'border-transparent hover:border-gray-300'
+                      className={`relative rounded-xl overflow-hidden border-2 transition-all ${
+                        selectedImage === idx 
+                          ? 'border-green-600 shadow-lg' 
+                          : 'border-transparent hover:border-gray-300'
                       }`}
                     >
-                      <img src={img} alt={`Vue ${idx + 1}`} className="w-full h-full object-cover" />
-                    </button>
+                      <img src={img} alt={`Vue ${idx + 1}`} className="w-full h-24 object-cover" />
+                    </motion.button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Informations produit */}
+            {/* Informations produit améliorées */}
             <div className="space-y-6">
               <div>
-                <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">{product.name}</h1>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                    Nouveauté
+                  </span>
+                  <span className="text-sm text-orange-600 bg-orange-50 px-3 py-1 rounded-full flex items-center gap-1">
+                    <Recycle size={14} />
+                    Recyclable
+                  </span>
+                </div>
+                
+                <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
+                  {product.name}
+                </h1>
+                
+                <div className="flex items-center gap-4 flex-wrap">
                   <div className="flex items-center gap-1">
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
                         size={18}
-                        className={i < Math.floor(rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+                        className={i < Math.floor(rating) 
+                          ? 'text-yellow-400 fill-yellow-400' 
+                          : 'text-gray-300'
+                        }
                       />
                     ))}
-                    <span className="ml-2 text-sm text-gray-600">{rating} · {reviews} avis</span>
+                    <span className="ml-2 text-sm text-gray-600">
+                      {rating} · {reviews} avis
+                    </span>
                   </div>
-                  <span className="text-sm text-green-600 bg-green-50 px-2 py-1 rounded-full">Éco-friendly</span>
                 </div>
               </div>
 
-              <p className="text-gray-600 text-lg leading-relaxed">{product.description}</p>
-
               <div className="flex items-baseline gap-4">
-                <span className="text-4xl font-bold text-green-600">{product.price.toLocaleString()} Ar</span>
+                <span className="text-4xl font-bold text-green-600">
+                  {product.price.toLocaleString()} Ar
+                </span>
                 {product.stock > 0 ? (
-                  <span className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">En stock</span>
+                  <span className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full flex items-center gap-1">
+                    <PackageCheck size={16} />
+                    En stock ({product.stock})
+                  </span>
                 ) : (
-                  <span className="text-sm text-red-600 bg-red-50 px-3 py-1 rounded-full">Rupture de stock</span>
+                  <span className="text-sm text-red-600 bg-red-50 px-3 py-1 rounded-full">
+                    Rupture de stock
+                  </span>
                 )}
               </div>
 
-              {/* Caractéristiques */}
-              <div className="grid grid-cols-2 gap-4 py-4 border-y border-gray-100">
-                <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-lg">
-                    <Leaf className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Catégorie</p>
-                    <p className="font-medium">{product.category}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-lg">
-                    <Truck className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Livraison</p>
-                    <p className="font-medium">Gratuite à partir de 50 000 Ar</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-lg">
-                    <Shield className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Garantie</p>
-                    <p className="font-medium">2 ans</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="bg-green-100 p-2 rounded-lg">
-                    <ShoppingCart className="h-5 w-5 text-green-600" />
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500">Stock</p>
-                    <p className="font-medium">{product.stock} unités</p>
-                  </div>
+              {/* Tabs améliorés */}
+              <div className="border-b border-gray-200">
+                <div className="flex gap-6">
+                  {['description', 'caractéristiques', 'avis'].map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`pb-3 text-sm font-medium transition-colors relative ${
+                        activeTab === tab 
+                          ? 'text-green-600' 
+                          : 'text-gray-500 hover:text-gray-700'
+                      }`}
+                    >
+                      {tab === 'description' && 'Description'}
+                      {tab === 'caractéristiques' && 'Caractéristiques'}
+                      {tab === 'avis' && `Avis (${reviews})`}
+                      {activeTab === tab && (
+                        <motion.div
+                          layoutId="activeTab"
+                          className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-600"
+                        />
+                      )}
+                    </button>
+                  ))}
                 </div>
               </div>
 
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="min-h-[120px]"
+                >
+                  {activeTab === 'description' && (
+                    <p className="text-gray-600 leading-relaxed">
+                      {product.description}
+                    </p>
+                  )}
+                  
+                  {activeTab === 'caractéristiques' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-100 p-2 rounded-lg">
+                          <Leaf className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Catégorie</p>
+                          <p className="font-medium">{product.category}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-100 p-2 rounded-lg">
+                          <Truck className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Livraison</p>
+                          <p className="font-medium">Gratuite</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-100 p-2 rounded-lg">
+                          <Shield className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Garantie</p>
+                          <p className="font-medium">2 ans</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-100 p-2 rounded-lg">
+                          <Sun className="h-5 w-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Énergie</p>
+                          <p className="font-medium">Renouvelable</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {activeTab === 'avis' && (
+                    <div className="space-y-4">
+                      {[1, 2].map((i) => (
+                        <div key={i} className="border-b border-gray-100 pb-4 last:border-0">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                              <span className="font-semibold text-green-600">U{i}</span>
+                            </div>
+                            <div>
+                              <p className="font-medium">Utilisateur {i}</p>
+                              <div className="flex items-center gap-1">
+                                {[...Array(5)].map((_, j) => (
+                                  <Star key={j} size={12} className={j < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-sm text-gray-600">
+                            Super produit, correspond parfaitement à mes attentes. Je recommande !
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
               {/* Quantité et actions */}
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-                <div className="flex items-center border border-gray-300 rounded-lg">
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 transition"
+                    className="px-4 py-3 text-gray-600 hover:bg-gray-100 transition font-medium"
                   >
                     -
                   </button>
-                  <span className="px-4 py-2 border-x border-gray-300 font-medium">{quantity}</span>
+                  <span className="px-4 py-3 border-x border-gray-300 font-medium min-w-[60px] text-center">
+                    {quantity}
+                  </span>
                   <button
                     onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 transition"
+                    className="px-4 py-3 text-gray-600 hover:bg-gray-100 transition font-medium"
                     disabled={quantity >= product.stock}
                   >
                     +
                   </button>
                 </div>
-                <button
+                
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                   disabled={product.stock === 0}
-                  className="flex-1 bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  onClick={handleAddToCart}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <ShoppingCart size={20} />
                   Ajouter au panier
-                </button>
-                <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
-                  <Heart size={20} className="text-gray-600" />
-                </button>
-                <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setIsLiked(!isLiked)}
+                  className={`p-3 border rounded-xl transition-all ${
+                    isLiked 
+                      ? 'border-red-200 bg-red-50' 
+                      : 'border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <Heart 
+                    size={20} 
+                    className={isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'} 
+                  />
+                </motion.button>
+                
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  className="p-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition"
+                >
                   <Share2 size={20} className="text-gray-600" />
-                </button>
+                </motion.button>
+              </div>
+
+              {/* Éco-badges */}
+              <div className="grid grid-cols-3 gap-2 pt-4">
+                <div className="bg-green-50 rounded-lg p-3 text-center">
+                  <Leaf className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                  <p className="text-xs text-gray-600">100% naturel</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-3 text-center">
+                  <Recycle className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                  <p className="text-xs text-gray-600">Recyclable</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-3 text-center">
+                  <Wind className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                  <p className="text-xs text-gray-600">Énergie verte</p>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Avis clients (simulés) */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 lg:p-10 mb-12">
-          <h2 className="text-2xl font-bold mb-6">Avis clients</h2>
-          <div className="space-y-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="border-b border-gray-100 pb-6 last:border-0">
-                <div className="flex items-center gap-4 mb-2">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="font-bold text-green-600">U{i}</span>
-                  </div>
-                  <div>
-                    <p className="font-semibold">Utilisateur {i}</p>
-                    <div className="flex items-center gap-1">
-                      {[...Array(5)].map((_, j) => (
-                        <Star key={j} size={14} className={j < 4 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} />
-                      ))}
-                      <span className="text-sm text-gray-500 ml-2">Il y a 3 jours</span>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-gray-600">
-                  Super produit, correspond parfaitement à mes attentes. Livraison rapide et emballage soigné. Je recommande !
-                </p>
-              </div>
-            ))}
-          </div>
-          <button className="mt-6 text-green-600 font-semibold hover:underline">Voir tous les avis →</button>
-        </div>
+        </motion.div>
 
         {/* Produits similaires */}
         {similarProducts.length > 0 && (
-          <div>
-            <h2 className="text-2xl font-bold mb-6">Vous pourriez aussi aimer</h2>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">
+                Vous pourriez aussi aimer
+              </h2>
+              <Link 
+                to={`/products?category=${product.category}`}
+                className="text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
+              >
+                Voir tout
+                <ArrowRight size={16} />
+              </Link>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {similarProducts.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
       </div>
     </div>
+  );
+}
+
+// Composant helper pour l'icône ChevronRight
+function ChevronRightIcon(props) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="m9 18 6-6-6-6" />
+    </svg>
   );
 }

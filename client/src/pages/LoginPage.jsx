@@ -1,60 +1,45 @@
-// import { useState } from 'react';
-// import { useAuth } from '../context/AuthContext';
-// import { useNavigate } from 'react-router-dom';
-
-// export default function LoginPage() {
-//   const [email, setEmail] = useState('');
-//   const [password, setPassword] = useState('');
-//   const { login } = useAuth();
-//   const navigate = useNavigate();
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     try {
-//       await login(email, password);
-//       navigate('/');
-//     } catch (error) {
-//       alert('Erreur de connexion');
-//     }
-//   };
-
-//   return (
-//     <div className="max-w-md mx-auto mt-10">
-//       <h1 className="text-2xl font-bold mb-4">Connexion</h1>
-//       <form onSubmit={handleSubmit} className="space-y-4">
-//         <input type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)} className="w-full border p-2 rounded" required />
-//         <input type="password" placeholder="Mot de passe" value={password} onChange={e => setPassword(e.target.value)} className="w-full border p-2 rounded" required />
-//         <button type="submit" className="w-full bg-green-600 text-white p-2 rounded">Se connecter</button>
-//       </form>
-//     </div>
-//   );
-// }
-
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
-  Leaf, Sun, Mail, Lock, LogIn, Wind, Droplets, ArrowRight,
-  Battery, Zap, TreePine
+  Leaf,
+  Sun,
+  Mail,
+  Lock,
+  LogIn,
+  Wind,
+  Droplets,
+  ArrowRight,
+  Battery,
+  Zap,
+  TreePine,
+  AlertCircle
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext'; // Utilisation du contexte
+import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuth(); // Récupération de la fonction login du contexte
+  const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage('');
     setIsLoading(true);
+
     try {
       await login(email, password);
       navigate('/');
     } catch (err) {
-      alert(err.response?.data?.message || "Email ou mot de passe incorrect");
+      console.error('Erreur de connexion:', err);
+      setErrorMessage(
+        err.response?.data?.message || 
+        "Email ou mot de passe incorrect. Veuillez réessayer."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -97,6 +82,14 @@ export default function Login() {
                 🌿 Heureux de vous revoir ! Ensemble pour un Madagascar plus vert
               </p>
             </div>
+
+            {/* Message d'erreur */}
+            {errorMessage && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-4 flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-600">{errorMessage}</p>
+              </div>
+            )}
 
             {/* Formulaire */}
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
@@ -199,6 +192,7 @@ export default function Login() {
 
               <div className="grid grid-cols-2 gap-2 sm:gap-3">
                 <motion.button
+                  type="button"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="flex items-center justify-center space-x-2 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
@@ -207,6 +201,7 @@ export default function Login() {
                   <span className="text-xs sm:text-sm text-gray-600">Google</span>
                 </motion.button>
                 <motion.button
+                  type="button"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="flex items-center justify-center space-x-2 py-2 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
@@ -220,9 +215,9 @@ export default function Login() {
         </motion.div>
       </div>
 
-      {/* Partie Droite - Hero (cachée sur mobile) */}
+      {/* Partie Droite - Hero */}
       <div className="hidden md:block md:w-1/2 relative bg-gradient-to-br from-green-600 to-emerald-700 overflow-hidden">
-        {/* Éléments décoratifs (inchangés) */}
+        {/* Éléments décoratifs */}
         <div className="absolute inset-0">
           <div className="absolute top-20 right-20 text-white/30 animate-float">
             <Sun size={80} />
@@ -238,6 +233,7 @@ export default function Login() {
           </div>
         </div>
 
+        {/* Contenu */}
         <div className="relative z-10 h-full flex flex-col items-center justify-center text-white p-12">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -276,7 +272,7 @@ export default function Login() {
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-green-300 rounded-full"></div>
-                <span>Communauté eco-responsable</span>
+                <span>Communauté éco-responsable</span>
               </div>
             </div>
             <div className="mt-8 inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full">

@@ -4,7 +4,7 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
-// Intercepteur pour ajouter le token d'accès à chaque requête
+// Intercepteur pour ajouter le token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('accessToken');
   if (token) {
@@ -13,28 +13,49 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Intercepteur pour rafraîchir le token en cas d'erreur 401 (optionnel)
+// Intercepteur pour gérer les erreurs 401
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, { refreshToken });
-        localStorage.setItem('accessToken', data.accessToken);
-        api.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
-        return api(originalRequest);
-      } catch (refreshError) {
-        // Rediriger vers login si le refresh échoue
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
-      }
+
+    // Éviter les boucles infinies
+    if (error.response?.status !== 401 || originalRequest._retry) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    originalRequest._retry = true;
+
+    try {
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        throw new Error('No refresh token');
+      }
+
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh`, {
+        refreshToken
+      });
+
+      const { accessToken } = response.data;
+      localStorage.setItem('accessToken', accessToken);
+
+      // Mettre à jour le header pour cette requête
+      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+      
+      // Retenter la requête originale
+      return api(originalRequest);
+    } catch (refreshError) {
+      // Refresh token invalide ou expiré
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      
+      // Rediriger vers login si pas déjà sur la page de login
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
+      
+      return Promise.reject(refreshError);
+    }
   }
 );
 
@@ -45,7 +66,7 @@ export const refreshToken = (data) => api.post('/auth/refresh', data);
 export const getProfile = () => api.get('/auth/profile');
 export const logout = () => api.get('/auth/logout');
 
-// Products - Modifié : plus de préfixe /api
+// Products
 export const getProducts = (params) => api.get('/products', { params });
 export const getProductById = (id) => api.get(`/products/${id}`);
 export const createProduct = (data) => api.post('/products', data);

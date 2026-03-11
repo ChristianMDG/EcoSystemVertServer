@@ -8,7 +8,7 @@ router.use(authMiddleware);
 
 router.get("/products" , productController.getProductsController);
 router.get("/products/:id", productController.getProductController);
-router.post("/products", authorize(['admin']),upload.single("image"),productController.createProductController);
+router.post("/products", upload.single("image"),productController.createProductController);
 router.put("/products/:id", authorize(['admin']),upload.single("image"),productController.updateProductController);
 router.delete("/products/:id",authorize(['admin']), productController.deleteProductController);
 

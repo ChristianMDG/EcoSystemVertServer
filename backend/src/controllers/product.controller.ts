@@ -41,7 +41,7 @@ export const createProductController = async (req: Request, res: Response) => {
 
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
-    if (req.user.role !== "admin")
+    if (req.user.role !== "admin" && req.user.role !== "client")
       return res.status(403).json({ error: "Forbidden" });
 
     const data = createProductSchema.parse(req.body);

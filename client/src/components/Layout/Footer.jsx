@@ -108,7 +108,7 @@ export default function Footer() {
         <div className="mt-4 flex justify-center">
           <span className="inline-flex items-center space-x-2 bg-gray-800 text-gray-300 px-3 py-1 rounded-full text-xs">
             <img src="https://flagcdn.com/w20/mg.png" alt="Madagascar" className="w-5 h-3.5 rounded" />
-            <span>Design By Christian RAVELOJAONA</span>
+            <span>Created By Christian RAVELOJAONA</span>
           </span>
         </div>
       </div>

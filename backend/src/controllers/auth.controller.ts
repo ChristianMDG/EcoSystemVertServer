@@ -56,3 +56,13 @@ export const logout = async (req: Request, res: Response) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+
+export const getAllUsers = async (_req: Request, res: Response) => {
+  try {
+    const users = await AuthService.getAllUsers();
+    res.json(users);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+}

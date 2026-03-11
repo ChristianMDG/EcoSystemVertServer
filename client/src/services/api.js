@@ -59,6 +59,8 @@ api.interceptors.response.use(
   }
 );
 
+export const profile = () => api.get('/profile');
+
 // Auth
 export const register = (data) => api.post('/auth/register', data);
 export const login = (data) => api.post('/auth/login', data);

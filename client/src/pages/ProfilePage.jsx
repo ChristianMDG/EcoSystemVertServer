@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { motion } from 'framer-motion';
-import { 
-  User, 
-  Mail, 
-  Calendar, 
-  Shield, 
-  Edit2, 
+import { useState, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
+import { motion } from "framer-motion";
+import {
+  User,
+  Mail,
+  Calendar,
+  Shield,
+  Edit2,
   Save,
   X,
   Leaf,
@@ -23,23 +23,27 @@ import {
   Clock,
   ChevronRight,
   Download,
-  Eye
-} from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import api from '../services/api';
+  Eye,
+} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import api from "../services/api";
 
 export default function ProfilePage() {
-  const { user, logout } = useAuth();
+  const { user, logout ,getFormattedJoinDate} = useAuth();
+  console.log('👤 User complet:', user);
+  console.log('📅 user.createdAt:', user?.createdAt);
+  console.log('🔑 Clés de user:', user ? Object.keys(user) : 'user null');
+  console.log('📅 getFormattedJoinDate() retourne:', getFormattedJoinDate());
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
-  const [editedName, setEditedName] = useState(user?.name || '');
-  const [activeTab, setActiveTab] = useState('profile');
+  const [editedName, setEditedName] = useState(user?.name || "");
+  const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState({
     orders: false,
     simulations: false,
-    stats: false
+    stats: false,
   });
-  
+
   // Données de l'utilisateur
   const [userOrders, setUserOrders] = useState([]);
   const [userSimulations, setUserSimulations] = useState([]);
@@ -48,9 +52,9 @@ export default function ProfilePage() {
     totalSpent: 0,
     totalSimulations: 0,
     totalCO2: 0,
-    averageSavings: 0
+    averageSavings: 0,
   });
-  const [memberSince, setMemberSince] = useState('');
+  const [memberSince, setMemberSince] = useState("");
 
   // Charger les données réelles
   useEffect(() => {
@@ -62,78 +66,82 @@ export default function ProfilePage() {
   const fetchUserData = async () => {
     try {
       // Charger les commandes
-      setLoading(prev => ({ ...prev, orders: true }));
-      const ordersRes = await api.get('/orders/user');
+      setLoading((prev) => ({ ...prev, orders: true }));
+      const ordersRes = await api.get("/orders/user");
       setUserOrders(ordersRes.data.data || []);
-      
+
       // Charger les simulations
-      setLoading(prev => ({ ...prev, simulations: true }));
-      const simulationsRes = await api.get('/energy/simulations?limit=100');
+      setLoading((prev) => ({ ...prev, simulations: true }));
+      const simulationsRes = await api.get("/energy/simulations?limit=100");
       setUserSimulations(simulationsRes.data.data?.simulations || []);
-      
+
       // Charger les statistiques
-      setLoading(prev => ({ ...prev, stats: true }));
-      const statsRes = await api.get('/energy/simulations/stats');
+      setLoading((prev) => ({ ...prev, stats: true }));
+      const statsRes = await api.get("/energy/simulations/stats");
       setUserStats(statsRes.data.data || {});
-      
+
       // Date d'inscription
       if (user?.createdAt) {
         const date = new Date(user.createdAt);
-        setMemberSince(date.toLocaleDateString('fr-FR', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        }));
+        setMemberSince(
+          date.toLocaleDateString("fr-FR", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          }),
+        );
       }
     } catch (error) {
-      console.error('Erreur chargement données:', error);
+      console.error("Erreur chargement données:", error);
     } finally {
       setLoading({
         orders: false,
         simulations: false,
-        stats: false
+        stats: false,
       });
     }
   };
 
   const handleSaveProfile = async () => {
     try {
-      await api.put('/users/profile', { name: editedName });
+      await api.put("/users/profile", { name: editedName });
       setIsEditing(false);
       // Mettre à jour le contexte localement ou recharger
       window.location.reload();
     } catch (error) {
-      console.error('Erreur mise à jour profil:', error);
+      console.error("Erreur mise à jour profil:", error);
     }
   };
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
   };
 
   const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-MG', { 
-      style: 'currency', 
-      currency: 'MGA',
+    return new Intl.NumberFormat("fr-MG", {
+      style: "currency",
+      currency: "MGA",
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(price).replace('MGA', 'Ar');
+      maximumFractionDigits: 0,
+    })
+      .format(price)
+      .replace("MGA", "Ar");
   };
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', { 
-      day: 'numeric', 
-      month: 'short', 
-      year: 'numeric' 
+    return date.toLocaleDateString("fr-FR", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   };
 
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-green-50 to-white flex items-center justify-center p-4">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center max-w-md"
@@ -141,8 +149,12 @@ export default function ProfilePage() {
           <div className="bg-red-50 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
             <User className="h-12 w-12 text-red-500" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Non connecté</h2>
-          <p className="text-gray-600 mb-8">Veuillez vous connecter pour accéder à votre profil.</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            Non connecté
+          </h2>
+          <p className="text-gray-600 mb-8">
+            Veuillez vous connecter pour accéder à votre profil.
+          </p>
           <Link
             to="/login"
             className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition-all"
@@ -156,17 +168,27 @@ export default function ProfilePage() {
   }
 
   const tabs = [
-    { id: 'profile', label: 'Profil', icon: User, count: null },
-    { id: 'orders', label: 'Commandes', icon: ShoppingBag, count: userOrders.length },
-    { id: 'simulations', label: 'Simulations', icon: Sun, count: userSimulations.length },
-    { id: 'stats', label: 'Statistiques', icon: TrendingUp, count: null },
+    { id: "profile", label: "Profil", icon: User, count: null },
+    {
+      id: "orders",
+      label: "Commandes",
+      icon: ShoppingBag,
+      count: userOrders.length,
+    },
+    {
+      id: "simulations",
+      label: "Simulations",
+      icon: Sun,
+      count: userSimulations.length,
+    },
+    { id: "stats", label: "Statistiques", icon: TrendingUp, count: null },
   ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-green-50 to-white py-8">
       <div className="container mx-auto px-4 max-w-7xl">
         {/* En-tête avec bannière */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           className="relative mb-8"
@@ -185,12 +207,12 @@ export default function ProfilePage() {
                 <h1 className="text-3xl font-bold">{user.name}</h1>
                 <p className="text-white/80 flex items-center gap-2">
                   <Calendar size={16} />
-                  Membre depuis {memberSince || 'mars 2024'}
+                  Membre depuis {memberSince || "mars 2024"}
                 </p>
               </div>
             </div>
           </div>
-          
+
           {/* Bouton déconnexion */}
           <button
             onClick={handleLogout}
@@ -212,18 +234,20 @@ export default function ProfilePage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all flex-1 sm:flex-none relative ${
                     activeTab === tab.id
-                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white shadow-lg"
+                      : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   <Icon size={18} />
                   <span className="hidden sm:inline">{tab.label}</span>
                   {tab.count > 0 && (
-                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
-                      activeTab === tab.id
-                        ? 'bg-white/20 text-white'
-                        : 'bg-gray-200 text-gray-600'
-                    }`}>
+                    <span
+                      className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                        activeTab === tab.id
+                          ? "bg-white/20 text-white"
+                          : "bg-gray-200 text-gray-600"
+                      }`}
+                    >
                       {tab.count}
                     </span>
                   )}
@@ -242,16 +266,18 @@ export default function ProfilePage() {
           className="bg-white rounded-3xl shadow-xl p-6 md:p-8"
         >
           {/* Onglet Profil */}
-          {activeTab === 'profile' && (
+          {activeTab === "profile" && (
             <div className="space-y-8">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-gray-800">Informations personnelles</h2>
+                <h2 className="text-2xl font-bold text-gray-800">
+                  Informations personnelles
+                </h2>
                 <button
                   onClick={() => setIsEditing(!isEditing)}
                   className="flex items-center gap-2 px-4 py-2 text-green-600 hover:bg-green-50 rounded-xl transition"
                 >
                   {isEditing ? <X size={18} /> : <Edit2 size={18} />}
-                  <span>{isEditing ? 'Annuler' : 'Modifier'}</span>
+                  <span>{isEditing ? "Annuler" : "Modifier"}</span>
                 </button>
               </div>
 
@@ -294,7 +320,9 @@ export default function ProfilePage() {
                     <Calendar className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
                       <p className="text-sm text-gray-500">Membre depuis</p>
-                      <p className="font-medium text-gray-800">{memberSince}</p>
+                      <p className="font-medium text-gray-800">
+                        {getFormattedJoinDate() || "Non disponible"}
+                      </p>
                     </div>
                   </div>
 
@@ -302,7 +330,9 @@ export default function ProfilePage() {
                     <Shield className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
                       <p className="text-sm text-gray-500">Rôle</p>
-                      <p className="font-medium text-gray-800 capitalize">{user.role}</p>
+                      <p className="font-medium text-gray-800 capitalize">
+                        {user.role}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -316,7 +346,9 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-white p-3 rounded-lg text-center">
                         <Leaf className="h-6 w-6 text-green-600 mx-auto mb-1" />
-                        <p className="text-xs text-gray-600">Éco-consommateur</p>
+                        <p className="text-xs text-gray-600">
+                          Éco-consommateur
+                        </p>
                       </div>
                       <div className="bg-white p-3 rounded-lg text-center">
                         <Sun className="h-6 w-6 text-yellow-500 mx-auto mb-1" />
@@ -330,10 +362,12 @@ export default function ProfilePage() {
           )}
 
           {/* Onglet Commandes */}
-          {activeTab === 'orders' && (
+          {activeTab === "orders" && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-800">Mes commandes</h2>
-              
+              <h2 className="text-2xl font-bold text-gray-800">
+                Mes commandes
+              </h2>
+
               {loading.orders ? (
                 <div className="flex justify-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
@@ -341,7 +375,9 @@ export default function ProfilePage() {
               ) : userOrders.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingBag className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">Vous n'avez pas encore de commande</p>
+                  <p className="text-gray-500 mb-4">
+                    Vous n'avez pas encore de commande
+                  </p>
                   <Link
                     to="/products"
                     className="inline-flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition"
@@ -352,11 +388,18 @@ export default function ProfilePage() {
               ) : (
                 <div className="space-y-4">
                   {userOrders.map((order) => (
-                    <div key={order.id} className="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
+                    <div
+                      key={order.id}
+                      className="bg-gray-50 rounded-xl p-4 hover:shadow-md transition"
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Commande #{order.id.slice(0, 8)}</p>
-                          <p className="font-medium">{formatDate(order.createdAt)}</p>
+                          <p className="text-sm text-gray-500">
+                            Commande #{order.id.slice(0, 8)}
+                          </p>
+                          <p className="font-medium">
+                            {formatDate(order.createdAt)}
+                          </p>
                         </div>
                         <div className="flex items-center gap-4">
                           <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
@@ -378,10 +421,12 @@ export default function ProfilePage() {
           )}
 
           {/* Onglet Simulations */}
-          {activeTab === 'simulations' && (
+          {activeTab === "simulations" && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-gray-800">Mes simulations énergétiques</h2>
-              
+              <h2 className="text-2xl font-bold text-gray-800">
+                Mes simulations énergétiques
+              </h2>
+
               {loading.simulations ? (
                 <div className="flex justify-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
@@ -389,7 +434,9 @@ export default function ProfilePage() {
               ) : userSimulations.length === 0 ? (
                 <div className="text-center py-12">
                   <Sun className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">Vous n'avez pas encore fait de simulation</p>
+                  <p className="text-gray-500 mb-4">
+                    Vous n'avez pas encore fait de simulation
+                  </p>
                   <Link
                     to="/energy-simulator"
                     className="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-xl hover:shadow-lg transition"
@@ -400,10 +447,15 @@ export default function ProfilePage() {
               ) : (
                 <div className="grid gap-4">
                   {userSimulations.map((sim) => (
-                    <div key={sim.id} className="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
+                    <div
+                      key={sim.id}
+                      className="bg-gray-50 rounded-xl p-4 hover:shadow-md transition"
+                    >
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div>
-                          <p className="text-sm text-gray-500">Simulation du {formatDate(sim.createdAt)}</p>
+                          <p className="text-sm text-gray-500">
+                            Simulation du {formatDate(sim.createdAt)}
+                          </p>
                           <div className="flex items-center gap-4 mt-2">
                             <span className="flex items-center gap-1 text-sm">
                               <Sun size={14} className="text-yellow-500" />
@@ -436,10 +488,12 @@ export default function ProfilePage() {
           )}
 
           {/* Onglet Statistiques */}
-          {activeTab === 'stats' && (
+          {activeTab === "stats" && (
             <div className="space-y-8">
-              <h2 className="text-2xl font-bold text-gray-800">Mes statistiques</h2>
-              
+              <h2 className="text-2xl font-bold text-gray-800">
+                Mes statistiques
+              </h2>
+
               {loading.stats ? (
                 <div className="flex justify-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
@@ -451,9 +505,11 @@ export default function ProfilePage() {
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl">
                       <ShoppingBag className="h-8 w-8 text-blue-600 mb-3" />
                       <p className="text-sm text-gray-600">Commandes</p>
-                      <p className="text-2xl font-bold text-gray-800">{userStats.totalOrders || 0}</p>
+                      <p className="text-2xl font-bold text-gray-800">
+                        {userStats.totalOrders || 0}
+                      </p>
                     </div>
-                    
+
                     <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl">
                       <TrendingUp className="h-8 w-8 text-green-600 mb-3" />
                       <p className="text-sm text-gray-600">Total dépensé</p>
@@ -461,34 +517,42 @@ export default function ProfilePage() {
                         {formatPrice(userStats.totalSpent || 0)}
                       </p>
                     </div>
-                    
+
                     <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 p-6 rounded-xl">
                       <Sun className="h-8 w-8 text-yellow-600 mb-3" />
                       <p className="text-sm text-gray-600">Simulations</p>
-                      <p className="text-2xl font-bold text-gray-800">{userStats.totalSimulations || 0}</p>
+                      <p className="text-2xl font-bold text-gray-800">
+                        {userStats.totalSimulations || 0}
+                      </p>
                     </div>
-                    
+
                     <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 p-6 rounded-xl">
                       <Leaf className="h-8 w-8 text-emerald-600 mb-3" />
                       <p className="text-sm text-gray-600">CO₂ économisé</p>
-                      <p className="text-2xl font-bold text-gray-800">{userStats.totalCO2 || 0} kg</p>
+                      <p className="text-2xl font-bold text-gray-800">
+                        {userStats.totalCO2 || 0} kg
+                      </p>
                     </div>
                   </div>
 
                   {/* Graphique d'activité simplifié */}
                   <div className="bg-gray-50 rounded-xl p-6">
-                    <h3 className="font-semibold text-gray-800 mb-4">Activité récente</h3>
+                    <h3 className="font-semibold text-gray-800 mb-4">
+                      Activité récente
+                    </h3>
                     <div className="space-y-3">
                       {[...Array(5)].map((_, i) => (
                         <div key={i} className="flex items-center gap-3">
                           <Clock size={14} className="text-gray-400" />
                           <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full"
                               style={{ width: `${Math.random() * 100}%` }}
                             ></div>
                           </div>
-                          <span className="text-sm text-gray-500">Semaine {i + 1}</span>
+                          <span className="text-sm text-gray-500">
+                            Semaine {i + 1}
+                          </span>
                         </div>
                       ))}
                     </div>

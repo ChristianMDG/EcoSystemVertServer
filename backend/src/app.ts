@@ -21,11 +21,12 @@ app.use(productRoutes);
 app.use(orderRoutes);
 
 
-
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'API is healthy' });
 });
 
 app.get('/profile', authMiddleware, (req, res) => {
-  res.json({ message: 'Profile info', user: req.user });
+  res.json({ 
+    user: req.user || null
+  });
 });

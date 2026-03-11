@@ -22,7 +22,7 @@ export class AuthService {
     return user;
   }
 
-  // LOGIN : access + refresh token
+  
   static async login(email: string, password: string) {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) throw new Error('Invalid credentials');
@@ -31,9 +31,9 @@ export class AuthService {
     if (!isValid) throw new Error('Invalid credentials');
 
     const accessToken = jwt.sign(
-      { userId: user.id, role: user.role,name: user.name ,email: user.email},
+      { userId: user.id, role: user.role,name: user.name ,email: user.email,createdAt : user.createdAt},
       env.JWT_SECRET,
-      { expiresIn: '1m' }
+      { expiresIn: '24h' }
     );
 
     const refreshToken = jwt.sign(
@@ -93,6 +93,18 @@ export class AuthService {
     await prisma.refreshToken.updateMany({
       where: { token: refreshToken },
       data: { revoked: true }
+    });
+  }
+
+  static async getAllUsers() {
+    return prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        createdAt: true
+      }
     });
   }
 }

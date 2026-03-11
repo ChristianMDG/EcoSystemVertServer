@@ -1,5 +1,5 @@
 // prisma/schema.prisma
-// EcoVert Mada - Version 1.1.0
+// EcoVert Mada - Version 1.2.0
 
 generator client {
   provider = "prisma-client-js"
@@ -31,22 +31,54 @@ model User {
   role          UserRole  @default(client)
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
   refreshTokens RefreshToken[]
-  orders        Order[]   
+  orders        Order[]
+  cart          Cart?
 }
 
 model RefreshToken {
   id        String   @id @default(cuid())
   token     String   @unique
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   expiresAt DateTime
   revoked   Boolean  @default(false)
 }
 
 // ========================================
-// MODULE PRODUCTS & ORDERS
+// MODULE CART (PANIER)
+// ========================================
+
+model Cart {
+  id        String      @id @default(uuid())
+  userId    String      @unique
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+// ========================================
+// MODULE PRODUCTS
 // ========================================
 
 model Product {
@@ -58,27 +90,43 @@ model Product {
   image       String?
   stock       Int
   createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relations
   orderItems  OrderItem[]
+  cartItems   CartItem[]
+
+  @@map("products")
 }
+
+// ========================================
+// MODULE ORDERS
+// ========================================
 
 model Order {
   id        String      @id @default(uuid())
   total     Float
   createdAt DateTime    @default(now())
-  items     OrderItem[]
-
+  updatedAt DateTime    @updatedAt
+  
+  // Relations
   user      User        @relation(fields: [userId], references: [id])
   userId    String
+  items     OrderItem[]
+
+  @@map("orders")
 }
 
 model OrderItem {
   id        String   @id @default(uuid())
-  order     Order    @relation(fields: [orderId], references: [id])
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   orderId   String
   product   Product  @relation(fields: [productId], references: [id])
   productId String
   quantity  Int
-  price     Float
+  price     Float    @map("unit_price")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("order_items")
 }
-
-

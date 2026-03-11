@@ -2,17 +2,27 @@
 import  { Request, Response } from "express";
 import * as orderService from "../services/order.service";
 import prisma from "../config/prisma";
+import { CartService } from "../services/cart.service";
 
+// Update in order.controller.ts
 export const createOrderController = async (req: Request, res: Response) => {
   try {
     if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
     const userId = req.user.userId;
-    const products = req.body.products;
-    const order = await orderService.createOrder(userId, products);
-   return res.status(201).json(order);
+    
+    // If products array is provided, use that (direct order)
+    if (req.body.products && Array.isArray(req.body.products)) {
+      const order = await orderService.createOrder(userId, req.body.products);
+      return res.status(201).json(order);
+    }
+    
+    // Otherwise, checkout from cart
+    const order = await CartService.checkout(userId);
+    return res.status(201).json(order);
+    
   } catch (err: any) {
-   return res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: err.message });
   }
 };
 

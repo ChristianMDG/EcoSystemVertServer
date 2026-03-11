@@ -7,7 +7,7 @@ import FilterSidebar from '../components/FilterSidebar';
 import SortDropdown from '../components/SortDropdown';
 import { FunnelIcon } from '@heroicons/react/24/outline';
 
-export default function ProductsPage() {
+export default function HomePage() {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);

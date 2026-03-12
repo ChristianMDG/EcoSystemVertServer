@@ -2,19 +2,26 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
+// Créer le dossier uploads s'il n'existe pas
 const uploadDir = 'uploads';
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
+// Sous-dossier pour les produits
+const productsDir = path.join(uploadDir, 'products');
+if (!fs.existsSync(productsDir)) {
+  fs.mkdirSync(productsDir, { recursive: true });
+}
+
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
+    cb(null, productsDir); // Stocker dans uploads/products/
   },
   filename: (_req, file, cb) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    cb(null, 'product-' + uniqueSuffix + ext);
   }
 });
 

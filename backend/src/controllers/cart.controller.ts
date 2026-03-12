@@ -11,11 +11,17 @@ export const getCartController = async (req: Request, res: Response) => {
     const total = await CartService.getCartTotal(req.user.userId);
 
     return res.json({
-      ...cart,
-      total
+      success: true,
+      data: {
+        ...cart,
+        total
+      }
     });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ 
+      success: false, 
+      error: err.message 
+    });
   }
 };
 
@@ -28,22 +34,34 @@ export const addToCartController = async (req: Request, res: Response) => {
     const { productId, quantity = 1 } = req.body;
 
     if (!productId) {
-      return res.status(400).json({ error: "Product ID is required" });
+      return res.status(400).json({ 
+        success: false, 
+        error: "Product ID is required" 
+      });
     }
 
     if (quantity < 1) {
-      return res.status(400).json({ error: "Quantity must be at least 1" });
+      return res.status(400).json({ 
+        success: false, 
+        error: "Quantity must be at least 1" 
+      });
     }
 
     const cart = await CartService.addItem(req.user.userId, productId, quantity);
     const total = await CartService.getCartTotal(req.user.userId);
 
     return res.json({
-      ...cart,
-      total
+      success: true,
+      data: {
+        ...cart,
+        total
+      }
     });
   } catch (err: any) {
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ 
+      success: false, 
+      error: err.message 
+    });
   }
 };
 
@@ -57,7 +75,10 @@ export const updateCartItemController = async (req: Request, res: Response) => {
     const { quantity } = req.body;
 
     if (quantity === undefined) {
-      return res.status(400).json({ error: "Quantity is required" });
+      return res.status(400).json({ 
+        success: false, 
+        error: "Quantity is required" 
+      });
     }
 
     const cart = await CartService.updateItemQuantity(
@@ -68,11 +89,17 @@ export const updateCartItemController = async (req: Request, res: Response) => {
     const total = await CartService.getCartTotal(req.user.userId);
 
     return res.json({
-      ...cart,
-      total
+      success: true,
+      data: {
+        ...cart,
+        total
+      }
     });
   } catch (err: any) {
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ 
+      success: false, 
+      error: err.message 
+    });
   }
 };
 
@@ -88,11 +115,17 @@ export const removeFromCartController = async (req: Request, res: Response) => {
     const total = await CartService.getCartTotal(req.user.userId);
 
     return res.json({
-      ...cart,
-      total
+      success: true,
+      data: {
+        ...cart,
+        total
+      }
     });
   } catch (err: any) {
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ 
+      success: false, 
+      error: err.message 
+    });
   }
 };
 
@@ -104,11 +137,17 @@ export const clearCartController = async (req: Request, res: Response) => {
 
     const cart = await CartService.clearCart(req.user.userId);
     return res.json({
-      ...cart,
-      total: 0
+      success: true,
+      data: {
+        ...cart,
+        total: 0
+      }
     });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ 
+      success: false, 
+      error: err.message 
+    });
   }
 };
 
@@ -118,13 +157,32 @@ export const checkoutController = async (req: Request, res: Response) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const order = await CartService.checkout(req.user.userId);
+    const { deliveryAddress, phoneNumber, deliveryNotes } = req.body;
+
+    // Validation des champs requis
+    if (!deliveryAddress || !phoneNumber) {
+      return res.status(400).json({
+        success: false,
+        error: "Delivery address and phone number are required"
+      });
+    }
+
+    const order = await CartService.checkout(
+      req.user.userId, 
+      deliveryAddress, 
+      phoneNumber, 
+      deliveryNotes
+    );
     
     return res.status(201).json({
-      message: "Order created successfully",
-      order
+      success: true,
+      message: "Order created successfully with Cash on Delivery",
+      data: order
     });
   } catch (err: any) {
-    return res.status(400).json({ error: err.message });
+    return res.status(400).json({ 
+      success: false, 
+      error: err.message 
+    });
   }
 };

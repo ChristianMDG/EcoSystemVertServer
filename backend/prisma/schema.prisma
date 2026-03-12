@@ -28,6 +28,19 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  MOBILE_MONEY
+  BANK_TRANSFER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
 // ========================================
 // MODULE AUTH & USERS
 // ========================================
@@ -38,15 +51,18 @@ model User {
   password      String
   name          String
   role          UserRole  @default(client)
+  isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   
   // Relations
-  refreshTokens RefreshToken[]
-  orders        Order[]
-  cart          Cart?
-  energySimulations EnergySimulation[]  // ← AJOUTÉ
-  simulationFeedbacks SimulationFeedback[] // ← AJOUTÉ
+  refreshTokens      RefreshToken[]
+  orders             Order[]
+  cart               Cart?
+  energySimulations  EnergySimulation[]
+  simulationFeedbacks SimulationFeedback[]
+
+  @@map("users")
 }
 
 model RefreshToken {
@@ -57,6 +73,8 @@ model RefreshToken {
   createdAt DateTime @default(now())
   expiresAt DateTime
   revoked   Boolean  @default(false)
+
+  @@map("refresh_tokens")
 }
 
 // ========================================
@@ -115,14 +133,20 @@ model Product {
 // ========================================
 
 model Order {
-  id        String      @id @default(uuid())
-  total     Float
-  status    OrderStatus @default(PENDING)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
-  paidAt    DateTime?
-  shippedAt DateTime?
-  deliveredAt DateTime?
+  id              String        @id @default(uuid())
+  total           Float
+  status          OrderStatus   @default(PENDING)
+  paymentMethod   PaymentMethod @default(CASH_ON_DELIVERY)
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentDate     DateTime?
+  deliveryAddress String
+  deliveryNotes   String?
+  phoneNumber     String
+ createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt
+  paidAt          DateTime?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
   
   // Relations
   user      User        @relation(fields: [userId], references: [id])
@@ -153,7 +177,7 @@ model OrderItem {
 model EnergySimulation {
   id              String   @id @default(uuid())
   userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)  // ← Relation avec User
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   // Données d'entrée
   surface         Float    // Surface disponible en m²
@@ -162,27 +186,27 @@ model EnergySimulation {
   budget          Float?   // Budget estimé (optionnel)
   
   // Résultats calculés
-  nbPanneaux      Int      // Nombre de panneaux recommandés
-  capaciteBatterie Float   // Capacité batterie en kWh
-  puissanceInstallee Float // Puissance installée en kW
-  coutEstime      Float    // Coût estimé en Ar
-  economieAnnuelle Float   // Économie annuelle estimée en Ar
-  retourInvestissement Float // Retour sur investissement en années
-  co2Economise    Float    // CO₂ économisé en kg/an
-  surfaceUtilisee Float    // Surface utilisée en m²
-  productionJournaliere Float // Production journalière en kWh
-  productionAnnuelle Int    // Production annuelle en kWh
-  autonomie       Int      // Taux d'autonomie en %
-  facteurEnsoleillement Float // Facteur selon localisation
-  estDansBudget   Boolean  // Dans le budget ou non
+  nbPanneaux           Int      // Nombre de panneaux recommandés
+  capaciteBatterie     Float    // Capacité batterie en kWh
+  puissanceInstallee   Float    // Puissance installée en kW
+  coutEstime           Float    // Coût estimé en Ar
+  economieAnnuelle     Float    // Économie annuelle estimée en Ar
+  retourInvestissement Float    // Retour sur investissement en années
+  co2Economise         Float    // CO₂ économisé en kg/an
+  surfaceUtilisee      Float    // Surface utilisée en m²
+  productionJournaliere Float   // Production journalière en kWh
+  productionAnnuelle   Int      // Production annuelle en kWh
+  autonomie            Int      // Taux d'autonomie en %
+  facteurEnsoleillement Float   // Facteur selon localisation
+  estDansBudget        Boolean  // Dans le budget ou non
   
   // Métadonnées
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   
   // Relations inverses
-  feedbacks       SimulationFeedback[] // ← AJOUTÉ pour la relation inverse
-  
+  feedbacks       SimulationFeedback[]
+
   @@map("energy_simulations")
 }
 
@@ -201,20 +225,20 @@ model EnergyProduct {
   featured    Boolean  @default(false)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
+
   @@map("energy_products")
 }
 
 model SimulationFeedback {
-  id            String   @id @default(uuid())
-  simulationId  String
-  simulation    EnergySimulation @relation(fields: [simulationId], references: [id], onDelete: Cascade) // ← Relation avec EnergySimulation
-  userId        String
-  user          User     @relation(fields: [userId], references: [id]) // ← Relation avec User
-  rating        Int      // Note de 1 à 5
-  comment       String?
-  usedForProject Boolean @default(false) // A utilisé pour un vrai projet
-  createdAt     DateTime @default(now())
-  
+  id              String   @id @default(uuid())
+  simulationId    String
+  simulation      EnergySimulation @relation(fields: [simulationId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  rating          Int      // Note de 1 à 5
+  comment         String?
+  usedForProject  Boolean  @default(false) // A utilisé pour un vrai projet
+  createdAt       DateTime @default(now())
+
   @@map("simulation_feedbacks")
 }

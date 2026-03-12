@@ -176,8 +176,18 @@ export class CartService {
     return total;
   }
 
-  // Checkout - convert cart to order
-  static async checkout(userId: string) {
+  // Checkout - convert cart to order with delivery details
+  static async checkout(
+    userId: string, 
+    deliveryAddress: string, 
+    phoneNumber: string, 
+    deliveryNotes?: string
+  ) {
+    // Validation des champs requis
+    if (!deliveryAddress || !phoneNumber) {
+      throw new Error("Delivery address and phone number are required");
+    }
+
     const cart = await this.getOrCreateCart(userId);
     
     if (cart.items.length === 0) {
@@ -205,11 +215,17 @@ export class CartService {
 
     // Create order in a transaction
     const order = await prisma.$transaction(async (tx) => {
-      // Create order
+      // Create order with all required fields
       const newOrder = await tx.order.create({
         data: {
           userId,
           total,
+          deliveryAddress,
+          phoneNumber,
+          deliveryNotes: deliveryNotes || null,
+          paymentMethod: "CASH_ON_DELIVERY",
+          paymentStatus: "PENDING",
+          status: "PENDING",
           items: {
             create: orderItems
           }

@@ -1,5 +1,5 @@
 // prisma/schema.prisma
-// EcoVert Mada - Version 1.2.0
+// EcoVert Mada - Version 2.0.0
 
 generator client {
   provider = "prisma-client-js"
@@ -19,6 +19,15 @@ enum UserRole {
   client
 }
 
+enum OrderStatus {
+  PENDING
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
 // ========================================
 // MODULE AUTH & USERS
 // ========================================
@@ -36,6 +45,8 @@ model User {
   refreshTokens RefreshToken[]
   orders        Order[]
   cart          Cart?
+  energySimulations EnergySimulation[]  // ← AJOUTÉ
+  simulationFeedbacks SimulationFeedback[] // ← AJOUTÉ
 }
 
 model RefreshToken {
@@ -106,8 +117,12 @@ model Product {
 model Order {
   id        String      @id @default(uuid())
   total     Float
+  status    OrderStatus @default(PENDING)
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
+  paidAt    DateTime?
+  shippedAt DateTime?
+  deliveredAt DateTime?
   
   // Relations
   user      User        @relation(fields: [userId], references: [id])
@@ -129,4 +144,77 @@ model OrderItem {
   updatedAt DateTime @updatedAt
 
   @@map("order_items")
+}
+
+// ========================================
+// MODULE ENERGY SIMULATOR
+// ========================================
+
+model EnergySimulation {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)  // ← Relation avec User
+  
+  // Données d'entrée
+  surface         Float    // Surface disponible en m²
+  consommation    Float    // Consommation en kWh/jour
+  localisation    String   // Ville/région
+  budget          Float?   // Budget estimé (optionnel)
+  
+  // Résultats calculés
+  nbPanneaux      Int      // Nombre de panneaux recommandés
+  capaciteBatterie Float   // Capacité batterie en kWh
+  puissanceInstallee Float // Puissance installée en kW
+  coutEstime      Float    // Coût estimé en Ar
+  economieAnnuelle Float   // Économie annuelle estimée en Ar
+  retourInvestissement Float // Retour sur investissement en années
+  co2Economise    Float    // CO₂ économisé en kg/an
+  surfaceUtilisee Float    // Surface utilisée en m²
+  productionJournaliere Float // Production journalière en kWh
+  productionAnnuelle Int    // Production annuelle en kWh
+  autonomie       Int      // Taux d'autonomie en %
+  facteurEnsoleillement Float // Facteur selon localisation
+  estDansBudget   Boolean  // Dans le budget ou non
+  
+  // Métadonnées
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations inverses
+  feedbacks       SimulationFeedback[] // ← AJOUTÉ pour la relation inverse
+  
+  @@map("energy_simulations")
+}
+
+model EnergyProduct {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  type        String   // 'panneau', 'batterie', 'onduleur', 'kit'
+  price       Float
+  power       Float?   // Puissance en kW
+  capacity    Float?   // Capacité en kWh
+  efficiency  Float?   // Efficacité en %
+  warranty    Int      // Garantie en années
+  image       String?
+  inStock     Boolean  @default(true)
+  featured    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("energy_products")
+}
+
+model SimulationFeedback {
+  id            String   @id @default(uuid())
+  simulationId  String
+  simulation    EnergySimulation @relation(fields: [simulationId], references: [id], onDelete: Cascade) // ← Relation avec EnergySimulation
+  userId        String
+  user          User     @relation(fields: [userId], references: [id]) // ← Relation avec User
+  rating        Int      // Note de 1 à 5
+  comment       String?
+  usedForProject Boolean @default(false) // A utilisé pour un vrai projet
+  createdAt     DateTime @default(now())
+  
+  @@map("simulation_feedbacks")
 }

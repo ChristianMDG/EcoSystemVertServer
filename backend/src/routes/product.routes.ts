@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as productController from "../controllers/product.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
-import { authorize } from "../middlewares/role.middleware";
+//import { authorize } from "../middlewares/role.middleware";
 import { upload } from "../middlewares/upload.middleware";
 const router = Router();
 router.use(authMiddleware);
@@ -9,7 +9,7 @@ router.use(authMiddleware);
 router.get("/products" , productController.getProductsController);
 router.get("/products/:id", productController.getProductController);
 router.post("/products", upload.single("image"),productController.createProductController);
-router.put("/products/:id", authorize(['admin']),upload.single("image"),productController.updateProductController);
-router.delete("/products/:id",authorize(['admin']), productController.deleteProductController);
+router.put("/products/:id",upload.single("image"),productController.updateProductController);
+router.delete("/products/:id", productController.deleteProductController);
 
 export default router;

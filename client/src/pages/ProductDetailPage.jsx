@@ -16,14 +16,22 @@ import {
   PackageCheck,
   Recycle,
   Sun,
-  Wind
+  Wind,
+  Minus,
+  Plus,
+  AlertCircle
 } from 'lucide-react';
 import { getProductById, getProducts } from '../services/api';
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+  const { addItem, isInCart, getItemQuantity } = useCart();
+  
   const [product, setProduct] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,6 +40,7 @@ export default function ProductDetailPage() {
   const [isLiked, setIsLiked] = useState(false);
   const [showAddedMessage, setShowAddedMessage] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
+  const [addError, setAddError] = useState(null);
 
   // Simulation de notes et avis
   const rating = 4.5;
@@ -48,10 +57,11 @@ export default function ProductDetailPage() {
         let similarData = similarRes.data;
         if (Array.isArray(similarData)) {
           setSimilarProducts(similarData.filter(p => p.id !== data.id));
-        } else if (similarData?.products) {
-          setSimilarProducts(similarData.products.filter(p => p.id !== data.id));
+        } else if (similarData?.data) {
+          setSimilarProducts(similarData.data.filter(p => p.id !== data.id));
         }
       } catch (error) {
+        console.error('Erreur chargement produit:', error);
         setProduct(null);
       } finally {
         setLoading(false);
@@ -60,9 +70,34 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
-  const handleAddToCart = () => {
-    setShowAddedMessage(true);
-    setTimeout(() => setShowAddedMessage(false), 3000);
+  const handleAddToCart = async () => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=' + encodeURIComponent(`/product/${id}`));
+      return;
+    }
+
+    try {
+      setAddError(null);
+      await addItem(product.id, quantity);
+      setShowAddedMessage(true);
+      setTimeout(() => setShowAddedMessage(false), 3000);
+    } catch (error) {
+      setAddError(error.response?.data?.error || 'Erreur lors de l\'ajout au panier');
+    }
+  };
+
+  const handleBuyNow = async () => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=' + encodeURIComponent(`/product/${id}`));
+      return;
+    }
+
+    try {
+      await addItem(product.id, quantity);
+      navigate('/cart');
+    } catch (error) {
+      setAddError(error.response?.data?.error || 'Erreur lors de l\'ajout au panier');
+    }
   };
 
   if (loading) {
@@ -105,14 +140,15 @@ export default function ProductDetailPage() {
 
   const imageUrl = product.image?.startsWith('http')
     ? product.image
-    : `${import.meta.env.VITE_API_URL}${product.image || product.imageUrl}`;
+    : `${import.meta.env.VITE_API_URL}${product.image || ''}`;
 
   const images = [imageUrl, imageUrl, imageUrl];
+  const currentQuantity = isInCart(product.id) ? getItemQuantity(product.id) : 0;
 
   return (
     <div className="bg-white min-h-screen">
       <div className="container mx-auto px-4 py-6 lg:py-10">
-        {/* Fil d'Ariane amélioré */}
+        {/* Fil d'Ariane */}
         <nav className="flex items-center text-sm text-gray-500 mb-8 overflow-x-auto pb-2">
           <Link to="/" className="hover:text-green-600 transition-colors flex items-center gap-1">
             Accueil
@@ -149,6 +185,38 @@ export default function ProductDetailPage() {
           )}
         </AnimatePresence>
 
+        {/* Message d'erreur */}
+        <AnimatePresence>
+          {addError && (
+            <motion.div
+              initial={{ opacity: 0, y: -50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -50 }}
+              className="fixed top-24 right-4 z-50 bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg flex items-center gap-3"
+            >
+              <AlertCircle size={20} />
+              <span>{addError}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Message si déjà dans le panier */}
+        {currentQuantity > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-xl mb-6 flex items-center gap-3"
+          >
+            <PackageCheck size={20} />
+            <span>
+              Vous avez déjà {currentQuantity} x {product.name} dans votre panier. 
+              <Link to="/cart" className="font-semibold underline ml-2 hover:text-blue-800">
+                Voir le panier
+              </Link>
+            </span>
+          </motion.div>
+        )}
+
         {/* Produit principal */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -156,7 +224,7 @@ export default function ProductDetailPage() {
           className="bg-white rounded-3xl shadow-xl overflow-hidden mb-12 border border-gray-100"
         >
           <div className="grid lg:grid-cols-2 gap-8 p-6 lg:p-10">
-            {/* Galerie d'images améliorée */}
+            {/* Galerie d'images */}
             <div className="space-y-4">
               <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden group">
                 <motion.img
@@ -195,10 +263,10 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Informations produit améliorées */}
+            {/* Informations produit */}
             <div className="space-y-6">
               <div>
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <span className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
                     Nouveauté
                   </span>
@@ -206,6 +274,11 @@ export default function ProductDetailPage() {
                     <Recycle size={14} />
                     Recyclable
                   </span>
+                  {product.stock <= 5 && product.stock > 0 && (
+                    <span className="text-sm text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                      Plus que {product.stock} en stock
+                    </span>
+                  )}
                 </div>
                 
                 <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-3">
@@ -233,7 +306,7 @@ export default function ProductDetailPage() {
 
               <div className="flex items-baseline gap-4">
                 <span className="text-4xl font-bold text-green-600">
-                  {product.price.toLocaleString()} Ar
+                  {product.price?.toLocaleString()} Ar
                 </span>
                 {product.stock > 0 ? (
                   <span className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full flex items-center gap-1">
@@ -247,7 +320,7 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Tabs améliorés */}
+              {/* Tabs */}
               <div className="border-b border-gray-200">
                 <div className="flex gap-6">
                   {['description', 'caractéristiques', 'avis'].map((tab) => (
@@ -358,59 +431,80 @@ export default function ProductDetailPage() {
               </AnimatePresence>
 
               {/* Quantité et actions */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-4 py-3 text-gray-600 hover:bg-gray-100 transition font-medium"
+              {product.stock > 0 ? (
+                <div className="space-y-4 pt-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden">
+                      <button
+                        onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                        className="px-4 py-3 text-gray-600 hover:bg-gray-100 transition font-medium"
+                        disabled={quantity <= 1}
+                      >
+                        <Minus size={16} />
+                      </button>
+                      <span className="px-4 py-3 border-x border-gray-300 font-medium min-w-[60px] text-center">
+                        {quantity}
+                      </span>
+                      <button
+                        onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
+                        className="px-4 py-3 text-gray-600 hover:bg-gray-100 transition font-medium"
+                        disabled={quantity >= product.stock}
+                      >
+                        <Plus size={16} />
+                      </button>
+                    </div>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      disabled={product.stock === 0}
+                      onClick={handleAddToCart}
+                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      <ShoppingCart size={20} />
+                      Ajouter au panier
+                    </motion.button>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleBuyNow}
+                    className="w-full border-2 border-green-600 text-green-600 py-3 px-6 rounded-xl font-semibold hover:bg-green-50 transition-all flex items-center justify-center gap-2"
                   >
-                    -
-                  </button>
-                  <span className="px-4 py-3 border-x border-gray-300 font-medium min-w-[60px] text-center">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    className="px-4 py-3 text-gray-600 hover:bg-gray-100 transition font-medium"
-                    disabled={quantity >= product.stock}
-                  >
-                    +
-                  </button>
+                    Acheter maintenant
+                    <ArrowRight size={20} />
+                  </motion.button>
                 </div>
-                
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  disabled={product.stock === 0}
-                  onClick={handleAddToCart}
-                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 text-white py-3 px-6 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                >
-                  <ShoppingCart size={20} />
-                  Ajouter au panier
-                </motion.button>
-                
+              ) : (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl text-center">
+                  Produit temporairement indisponible
+                </div>
+              )}
+
+              {/* Actions secondaires */}
+              <div className="flex gap-2 pt-2">
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setIsLiked(!isLiked)}
-                  className={`p-3 border rounded-xl transition-all ${
+                  className={`p-3 border rounded-xl transition-all flex-1 flex items-center justify-center gap-2 ${
                     isLiked 
-                      ? 'border-red-200 bg-red-50' 
-                      : 'border-gray-300 hover:bg-gray-50'
+                      ? 'border-red-200 bg-red-50 text-red-500' 
+                      : 'border-gray-300 hover:bg-gray-50 text-gray-600'
                   }`}
                 >
-                  <Heart 
-                    size={20} 
-                    className={isLiked ? 'fill-red-500 text-red-500' : 'text-gray-600'} 
-                  />
+                  <Heart size={20} className={isLiked ? 'fill-red-500' : ''} />
+                  {isLiked ? 'Favori' : 'Ajouter aux favoris'}
                 </motion.button>
                 
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
-                  className="p-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition"
+                  className="p-3 border border-gray-300 rounded-xl hover:bg-gray-50 transition flex-1 flex items-center justify-center gap-2 text-gray-600"
                 >
-                  <Share2 size={20} className="text-gray-600" />
+                  <Share2 size={20} />
+                  Partager
                 </motion.button>
               </div>
 

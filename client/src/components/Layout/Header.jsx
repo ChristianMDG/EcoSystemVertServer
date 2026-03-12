@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { 
-  Leaf, 
-  User, 
-  Menu, 
-  X, 
-  Heart, 
-  ShoppingBag, 
-  LogOut, 
+import { useState, useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import { useCart } from "../../context/CartContext";
+import {
+  Leaf,
+  User,
+  Menu,
+  X,
+  Heart,
+  ShoppingBag,
+  LogOut,
   AlertCircle,
   ChevronDown,
   Home,
@@ -17,8 +18,8 @@ import {
   Wind,
   Battery,
   Sparkles,
-  Calculator // Icône pour le simulateur
-} from 'lucide-react';
+  Calculator, // Icône pour le simulateur
+} from "lucide-react";
 
 export default function Header() {
   const { user, logout } = useAuth();
@@ -35,8 +36,8 @@ export default function Header() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 10);
     };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Fermer le menu utilisateur au clic extérieur
@@ -46,19 +47,33 @@ export default function Header() {
         setShowUserMenu(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const getInitial = () => user?.name ? user.name.charAt(0).toUpperCase() : null;
+  const getInitial = () =>
+    user?.name ? user.name.charAt(0).toUpperCase() : null;
 
   const navLinks = [
-    { name: 'Accueil', path: '/', icon: Home },
-    { name: 'Produits', path: '/products', icon: Package },
-    { name: 'Panneaux solaires', path: '/products?category=Panneaux%20solaires', icon: Sun },
-    { name: 'Éoliennes', path: '/products?category=Éoliennes', icon: Wind },
-    { name: 'Accessoires', path: '/products?category=Accessoires', icon: Battery },
-    { name: 'Simulateur', path: '/energy-simulator', icon: Calculator, highlight: true },
+    { name: "Accueil", path: "/", icon: Home },
+    { name: "Produits", path: "/products", icon: Package },
+    {
+      name: "Panneaux solaires",
+      path: "/products?category=Panneaux%20solaires",
+      icon: Sun,
+    },
+    { name: "Éoliennes", path: "/products?category=Éoliennes", icon: Wind },
+    {
+      name: "Accessoires",
+      path: "/products?category=Accessoires",
+      icon: Battery,
+    },
+    {
+      name: "Simulateur",
+      path: "/energy-simulator",
+      icon: Calculator,
+      highlight: true,
+    },
   ];
 
   const isActive = (path) => location.pathname + location.search === path;
@@ -72,7 +87,7 @@ export default function Header() {
   const handleConfirmLogout = () => {
     logout();
     setShowLogoutConfirm(false);
-    navigate('/');
+    navigate("/");
   };
 
   const handleCancelLogout = () => {
@@ -86,18 +101,21 @@ export default function Header() {
     setShowUserMenu(false);
   };
 
+  const { itemCount } = useCart();
   return (
     <>
-      <header className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-lg' 
-          : 'bg-white border-b border-gray-200 shadow-sm'
-      }`}>
+      <header
+        className={`sticky top-0 z-50 transition-all duration-300 ${
+          scrolled
+            ? "bg-white/95 backdrop-blur-md shadow-lg"
+            : "bg-white border-b border-gray-200 shadow-sm"
+        }`}
+      >
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-20">
             {/* Logo avec animation */}
             <button
-              onClick={() => handleNavigation('/')}
+              onClick={() => handleNavigation("/")}
               className="flex items-center gap-2 group shrink-0"
             >
               <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-2 rounded-xl shadow-md group-hover:shadow-lg group-hover:scale-110 transition-all duration-300">
@@ -118,10 +136,10 @@ export default function Header() {
                     onClick={() => handleNavigation(link.path)}
                     className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                       isActive(link.path)
-                        ? 'bg-green-50 text-green-700 shadow-sm'
+                        ? "bg-green-50 text-green-700 shadow-sm"
                         : link.highlight
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-md hover:scale-105'
-                        : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+                          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:shadow-md hover:scale-105"
+                          : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                     }`}
                   >
                     <Icon size={18} />
@@ -134,31 +152,41 @@ export default function Header() {
             {/* Actions utilisateur desktop */}
             <div className="hidden md:flex items-center gap-2">
               {/* Favoris avec animation */}
-              <button 
-                onClick={() => handleNavigation('/favorites')}
+              <button
+                onClick={() => handleNavigation("/favorites")}
                 className="relative p-2 text-gray-700 hover:text-green-600 transition-colors group"
               >
-                <Heart size={22} className="group-hover:scale-110 transition-transform" />
+                <Heart
+                  size={22}
+                  className="group-hover:scale-110 transition-transform"
+                />
                 <span className="absolute -top-1 -right-1 bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-md">
                   3
                 </span>
               </button>
 
               {/* Panier avec animation */}
-              <button 
-                onClick={() => handleNavigation('/cart')}
+              <button
+                onClick={() => handleNavigation("/cart")}
                 className="relative p-2 text-gray-700 hover:text-green-600 transition-colors group"
               >
-                <ShoppingBag size={22} className="group-hover:scale-110 transition-transform" />
-                <span className="absolute -top-1 -right-1 bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-md">
-                  2
-                </span>
+                <ShoppingBag
+                  size={22}
+                  className="group-hover:scale-110 transition-transform"
+                />
+                {itemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-br from-green-500 to-emerald-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center shadow-md animate-pulse">
+                    {itemCount}
+                  </span>
+                )}
               </button>
 
               {/* Badge éco-friendly */}
               <div className="hidden xl:flex items-center gap-1 px-3 py-1.5 bg-green-50 rounded-full border border-green-100 mr-2">
                 <Sparkles size={16} className="text-green-600" />
-                <span className="text-xs font-medium text-green-700">Éco-responsable</span>
+                <span className="text-xs font-medium text-green-700">
+                  Éco-responsable
+                </span>
               </div>
 
               {/* Menu utilisateur avec dropdown */}
@@ -172,13 +200,13 @@ export default function Header() {
                       {getInitial()}
                     </div>
                     <span className="text-sm font-medium text-gray-700 hidden lg:block">
-                      {user.name?.split(' ')[0]}
+                      {user.name?.split(" ")[0]}
                     </span>
-                    <ChevronDown 
-                      size={16} 
+                    <ChevronDown
+                      size={16}
                       className={`text-gray-500 transition-transform duration-200 ${
-                        showUserMenu ? 'rotate-180' : ''
-                      }`} 
+                        showUserMenu ? "rotate-180" : ""
+                      }`}
                     />
                   </button>
 
@@ -186,23 +214,25 @@ export default function Header() {
                   {showUserMenu && (
                     <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 animate-fadeIn">
                       <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {user.name}
+                        </p>
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
                       <button
-                        onClick={() => handleNavigation('/profile')}
+                        onClick={() => handleNavigation("/profile")}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
                       >
                         Mon profil
                       </button>
                       <button
-                        onClick={() => handleNavigation('/orders')}
+                        onClick={() => handleNavigation("/orders")}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
                       >
                         Mes commandes
                       </button>
                       <button
-                        onClick={() => handleNavigation('/favorites')}
+                        onClick={() => handleNavigation("/favorites")}
                         className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-700 transition-colors"
                       >
                         Mes favoris
@@ -221,13 +251,13 @@ export default function Header() {
               ) : (
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => handleNavigation('/login')}
+                    onClick={() => handleNavigation("/login")}
                     className="px-4 py-2 text-gray-700 hover:text-gray-900 font-medium hover:bg-gray-100 rounded-full transition-all"
                   >
                     Connexion
                   </button>
                   <button
-                    onClick={() => handleNavigation('/register')}
+                    onClick={() => handleNavigation("/register")}
                     className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full hover:shadow-lg hover:scale-105 transition-all duration-200 font-medium"
                   >
                     Inscription
@@ -238,8 +268,8 @@ export default function Header() {
 
             {/* Menu mobile */}
             <div className="md:hidden flex items-center gap-2">
-              <button 
-                onClick={() => handleNavigation('/cart')}
+              <button
+                onClick={() => handleNavigation("/cart")}
                 className="relative p-2 text-gray-700"
               >
                 <ShoppingBag size={24} />
@@ -258,9 +288,9 @@ export default function Header() {
           </div>
 
           {/* Menu mobile déroulant */}
-          <div 
+          <div
             className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-              isMenuOpen ? 'max-h-[32rem] opacity-100' : 'max-h-0 opacity-0'
+              isMenuOpen ? "max-h-[32rem] opacity-100" : "max-h-0 opacity-0"
             }`}
           >
             <div className="py-4 border-t border-gray-200">
@@ -273,8 +303,8 @@ export default function Header() {
                       onClick={() => handleNavigation(link.path)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
                         link.highlight
-                          ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white'
-                          : 'text-gray-700 hover:bg-green-50 hover:text-green-700'
+                          ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white"
+                          : "text-gray-700 hover:bg-green-50 hover:text-green-700"
                       }`}
                     >
                       <Icon size={20} />
@@ -282,30 +312,32 @@ export default function Header() {
                     </button>
                   );
                 })}
-                
+
                 <div className="border-t border-gray-200 my-2 pt-2">
                   {user ? (
                     <>
                       <div className="px-4 py-3">
-                        <p className="text-sm font-semibold text-gray-900">{user.name}</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {user.name}
+                        </p>
                         <p className="text-xs text-gray-500">{user.email}</p>
                       </div>
                       <button
-                        onClick={() => handleNavigation('/profile')}
+                        onClick={() => handleNavigation("/profile")}
                         className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors w-full text-left"
                       >
                         <User size={20} />
                         Profil
                       </button>
                       <button
-                        onClick={() => handleNavigation('/orders')}
+                        onClick={() => handleNavigation("/orders")}
                         className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors w-full text-left"
                       >
                         <Package size={20} />
                         Commandes
                       </button>
                       <button
-                        onClick={() => handleNavigation('/favorites')}
+                        onClick={() => handleNavigation("/favorites")}
                         className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors w-full text-left"
                       >
                         <Heart size={20} />
@@ -322,14 +354,14 @@ export default function Header() {
                   ) : (
                     <>
                       <button
-                        onClick={() => handleNavigation('/login')}
+                        onClick={() => handleNavigation("/login")}
                         className="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-green-50 hover:text-green-700 rounded-lg transition-colors w-full text-left"
                       >
                         <User size={20} />
                         Connexion
                       </button>
                       <button
-                        onClick={() => handleNavigation('/register')}
+                        onClick={() => handleNavigation("/register")}
                         className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg transition-all w-full text-left"
                       >
                         <User size={20} />
@@ -347,11 +379,11 @@ export default function Header() {
       {/* Modal de confirmation */}
       {showLogoutConfirm && (
         <>
-          <div 
+          <div
             className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 animate-fadeIn"
             onClick={handleCancelLogout}
           ></div>
-          
+
           <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
             <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-slideUp">
               <div className="flex items-start gap-4 mb-4">
@@ -367,7 +399,7 @@ export default function Header() {
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-3 justify-end mt-6">
                 <button
                   onClick={handleCancelLogout}

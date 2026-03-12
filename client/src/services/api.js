@@ -19,7 +19,6 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // Éviter les boucles infinies
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error);
     }
@@ -39,17 +38,12 @@ api.interceptors.response.use(
       const { accessToken } = response.data;
       localStorage.setItem('accessToken', accessToken);
 
-      // Mettre à jour le header pour cette requête
       originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-      
-      // Retenter la requête originale
       return api(originalRequest);
     } catch (refreshError) {
-      // Refresh token invalide ou expiré
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       
-      // Rediriger vers login si pas déjà sur la page de login
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
       }
@@ -59,20 +53,71 @@ api.interceptors.response.use(
   }
 );
 
-export const profile = () => api.get('/profile');
-
-// Auth
+// ========================================
+// AUTH
+// ========================================
 export const register = (data) => api.post('/auth/register', data);
 export const login = (data) => api.post('/auth/login', data);
 export const refreshToken = (data) => api.post('/auth/refresh', data);
 export const getProfile = () => api.get('/auth/profile');
-export const logout = () => api.get('/auth/logout');
+export const logout = () => api.post('/auth/logout');
+export const getAllUsers = () => api.get('/auth/users');
 
-// Products
+// ========================================
+// PRODUCTS
+// ========================================
 export const getProducts = (params) => api.get('/products', { params });
 export const getProductById = (id) => api.get(`/products/${id}`);
 export const createProduct = (data) => api.post('/products', data);
 export const updateProduct = (id, data) => api.put(`/products/${id}`, data);
 export const deleteProduct = (id) => api.delete(`/products/${id}`);
 
+// ========================================
+// CART (PANIER)
+// ========================================
+export const getCart = () => api.get('/cart');
+export const addToCart = (productId, quantity = 1) => 
+  api.post('/cart/items', { productId, quantity });
+export const updateCartItem = (productId, quantity) => 
+  api.put(`/cart/items/${productId}`, { quantity });
+export const removeFromCart = (productId) => 
+  api.delete(`/cart/items/${productId}`);
+export const clearCart = () => api.delete('/cart');
+export const checkout = () => api.post('/cart/checkout');
+
+// ========================================
+// ORDERS
+// ========================================
+export const createOrder = (products) => api.post('/orders', { products });
+export const getOrders = () => api.get('/orders');
+export const getOrderById = (id) => api.get(`/orders/${id}`);
+
+
+
+// ========================================
+// ENERGY SIMULATOR
+// ========================================
+
+// Créer une simulation
+export const createSimulation = (data) => api.post('/energy/simulations', data);
+
+// Récupérer toutes les simulations de l'utilisateur
+export const getUserSimulations = (params) => api.get('/energy/simulations', { params });
+
+// Récupérer une simulation spécifique
+export const getSimulationById = (id) => api.get(`/energy/simulations/${id}`);
+
+// Supprimer une simulation
+export const deleteSimulation = (id) => api.delete(`/energy/simulations/${id}`);
+
+// Obtenir les statistiques de l'utilisateur
+export const getUserEnergyStats = () => api.get('/energy/simulations/stats');
+
+// Ajouter un feedback
+export const addSimulationFeedback = (simulationId, data) => 
+  api.post(`/energy/simulations/${simulationId}/feedback`, data);
+
+// Obtenir des conseils personnalisés (optionnel)
+export const getEnergyTips = (localisation, consommation) => 
+  api.get('/energy/tips', { params: { localisation, consommation } });
 export default api;

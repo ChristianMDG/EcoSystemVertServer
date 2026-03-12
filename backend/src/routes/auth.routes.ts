@@ -10,4 +10,5 @@ router.post('/auth/login', validate(loginSchema), login);
 router.post('/auth/refresh', refreshToken);
 router.post('/auth/logout', logout);;
 router.get('/auth/users', getAllUsers);
+
 export default router;

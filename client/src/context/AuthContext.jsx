@@ -377,17 +377,15 @@ export const AuthProvider = ({ children }) => {
     if (!token) return null;
     
     try {
-      const decoded = jwtDecode(token);
-      console.log('🔍 Token décodé:', decoded);
-      
+      const decoded = jwtDecode(token); 
       return {
         id: decoded.userId || decoded.id,
-        name: decoded.name || decoded.sub,
+       // name: decoded.name || decoded.sub,
         email: decoded.email,
-        role: decoded.role || 'client',
-        createdAt: decoded.createdAt ? new Date(decoded.createdAt) : new Date(),
-        exp: decoded.exp,
-        iat: decoded.iat
+       // role: decoded.role || 'client',
+       // createdAt: decoded.createdAt ? new Date(decoded.createdAt) : new Date(),
+       // exp: decoded.exp,
+       // iat: decoded.iat
       };
     } catch (error) {
       console.error('❌ Erreur décodage token:', error);
@@ -398,10 +396,8 @@ export const AuthProvider = ({ children }) => {
   // Récupérer le profil (avec gestion d'erreur 404)
   const fetchUserProfile = useCallback(async () => {
     try {
-      console.log('📡 Récupération du profil depuis /profile');
       const response = await getProfile();
-      console.log('📦 Profil reçu:', response.data);
-      
+    
       const userData = response.data.user || response.data;
       
       if (userData) {
@@ -410,7 +406,7 @@ export const AuthProvider = ({ children }) => {
           id: userData.userId || userData.id || prevUser?.id,
           name: userData.name || prevUser?.name,
           email: userData.email || prevUser?.email,
-          role: userData.role || prevUser?.role || 'client',
+          role: userData.role || prevUser?.role,
           createdAt: userData.createdAt ? new Date(userData.createdAt) : prevUser?.createdAt || new Date()
         }));
         
@@ -420,7 +416,6 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       // Si 404, on ignore et on garde les données du token
       if (error.response?.status === 404) {
-        console.log('⚠️ Endpoint /profile non trouvé, utilisation des données du token');
         return null;
       }
       console.error('❌ Erreur récupération profil:', error);

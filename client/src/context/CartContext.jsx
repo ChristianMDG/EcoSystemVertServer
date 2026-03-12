@@ -404,41 +404,55 @@ export const CartProvider = ({ children }) => {
   }, [isAuthenticated, updateDeliveryInfo]);
 
   // Passer commande
-  const checkoutCart = useCallback(async () => {
-    if (!isAuthenticated) {
-      window.location.href = '/login?redirect=/checkout';
-      return null;
-    }
+  // Modifier seulement la fonction checkoutCart
 
-    setLoading(true);
-    setError(null);
+const checkoutCart = useCallback(async (deliveryDetails) => {
+  if (!isAuthenticated) {
+    window.location.href = '/login?redirect=/checkout';
+    return null;
+  }
+
+  // Validation des champs requis
+  if (!deliveryDetails?.deliveryAddress || !deliveryDetails?.phoneNumber) {
+    throw new Error("L'adresse de livraison et le numéro de téléphone sont requis");
+  }
+
+  setLoading(true);
+  setError(null);
+  
+  try {
+    console.log('💰 Passage de commande avec livraison...', deliveryDetails);
     
-    try {
-      console.log('💰 Passage de commande...');
-      const response = await checkout();
-      
-      const order = response.data?.data || response.data || response;
-      
-      const emptyCartData = { items: [] };
-      setCart(emptyCartData);
-      setItemCount(0);
-      setCartTotal(0);
-      
-      setUserOrders(prev => [...prev, order]);
-      updateDeliveryInfo(0);
-      
-      return order;
-      
-    } catch (err) {
-      console.error('❌ Erreur commande:', err);
-      const errorMessage = err.response?.data?.error || err.message || 'Erreur lors de la commande';
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [isAuthenticated, updateDeliveryInfo]);
-
+    // Appel API avec les détails de livraison
+    const response = await checkout({
+      deliveryAddress: deliveryDetails.deliveryAddress,
+      phoneNumber: deliveryDetails.phoneNumber,
+      deliveryNotes: deliveryDetails.deliveryNotes || ''
+    });
+    
+    const order = response.data?.data || response.data || response;
+    
+    // Vider le panier localement
+    const emptyCartData = { items: [] };
+    setCart(emptyCartData);
+    setItemCount(0);
+    setCartTotal(0);
+    
+    // Ajouter la commande à la liste
+    setUserOrders(prev => Array.isArray(prev) ? [...prev, order] : [order]);
+    updateDeliveryInfo(0);
+    
+    return order;
+    
+  } catch (err) {
+    console.error('❌ Erreur commande:', err);
+    const errorMessage = err.response?.data?.error || err.message || 'Erreur lors de la commande';
+    setError(errorMessage);
+    throw err;
+  } finally {
+    setLoading(false);
+  }
+}, [isAuthenticated, updateDeliveryInfo, checkout]);
   // Changer la zone de livraison
   const setDeliveryZone = useCallback((zone) => {
     setDeliveryInfo(prev => ({ ...prev, zone }));

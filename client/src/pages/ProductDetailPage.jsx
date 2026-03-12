@@ -19,12 +19,15 @@ import {
   Wind,
   Minus,
   Plus,
-  AlertCircle
+  AlertCircle,
+  ChevronRight as ChevronRightIcon
 } from 'lucide-react';
 import { getProductById, getProducts } from '../services/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import ProductCard from '../components/ProductCard';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -41,6 +44,7 @@ export default function ProductDetailPage() {
   const [showAddedMessage, setShowAddedMessage] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
   const [addError, setAddError] = useState(null);
+  const [imageError, setImageError] = useState(false);
 
   // Simulation de notes et avis
   const rating = 4.5;
@@ -49,16 +53,21 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const { data } = await getProductById(id);
-        setProduct(data);
+        setLoading(true);
+        const response = await getProductById(id);
+        const productData = response.data?.data || response.data || response;
+        console.log("📦 Produit reçu:", productData);
+        setProduct(productData);
         
         // Charger des produits similaires
-        const similarRes = await getProducts({ category: data.category, limit: 4 });
-        let similarData = similarRes.data;
-        if (Array.isArray(similarData)) {
-          setSimilarProducts(similarData.filter(p => p.id !== data.id));
-        } else if (similarData?.data) {
-          setSimilarProducts(similarData.data.filter(p => p.id !== data.id));
+        if (productData?.category) {
+          const similarRes = await getProducts({ category: productData.category, limit: 4 });
+          let similarData = similarRes.data?.data || similarRes.data || similarRes;
+          if (Array.isArray(similarData)) {
+            setSimilarProducts(similarData.filter(p => p.id !== productData.id));
+          } else if (similarData?.products) {
+            setSimilarProducts(similarData.products.filter(p => p.id !== productData.id));
+          }
         }
       } catch (error) {
         console.error('Erreur chargement produit:', error);
@@ -70,9 +79,24 @@ export default function ProductDetailPage() {
     fetchProduct();
   }, [id]);
 
+  // Fonction pour obtenir l'URL complète de l'image
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    if (imagePath.startsWith('/uploads')) {
+      return `${API_URL}${imagePath}`;
+    }
+    
+    return `${API_URL}/uploads/products/${imagePath}`;
+  };
+
   const handleAddToCart = async () => {
     if (!isAuthenticated) {
-      navigate('/login?redirect=' + encodeURIComponent(`/product/${id}`));
+      navigate('/login?redirect=' + encodeURIComponent(`/products/${id}`));
       return;
     }
 
@@ -88,7 +112,7 @@ export default function ProductDetailPage() {
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) {
-      navigate('/login?redirect=' + encodeURIComponent(`/product/${id}`));
+      navigate('/login?redirect=' + encodeURIComponent(`/products/${id}`));
       return;
     }
 
@@ -138,33 +162,34 @@ export default function ProductDetailPage() {
     );
   }
 
-  const imageUrl = product.image?.startsWith('http')
-    ? product.image
-    : `${import.meta.env.VITE_API_URL}${product.image || ''}`;
-
-  const images = [imageUrl, imageUrl, imageUrl];
-  const currentQuantity = isInCart(product.id) ? getItemQuantity(product.id) : 0;
+  const imageUrl = getImageUrl(product.image);
+  const images = [imageUrl, imageUrl, imageUrl].filter(Boolean);
+  const currentQuantity = isInCart ? isInCart(product.id) ? getItemQuantity(product.id) : 0 : 0;
 
   return (
     <div className="bg-white min-h-screen">
       <div className="container mx-auto px-4 py-6 lg:py-10">
         {/* Fil d'Ariane */}
         <nav className="flex items-center text-sm text-gray-500 mb-8 overflow-x-auto pb-2">
-          <Link to="/" className="hover:text-green-600 transition-colors flex items-center gap-1">
+          <Link to="/" className="hover:text-green-600 transition-colors flex items-center gap-1 whitespace-nowrap">
             Accueil
           </Link>
-          <ChevronRightIcon className="w-4 h-4 mx-2 text-gray-400" />
+          <ChevronRightIcon className="w-4 h-4 mx-2 text-gray-400 flex-shrink-0" />
           <Link to="/products" className="hover:text-green-600 transition-colors whitespace-nowrap">
             Produits
           </Link>
-          <ChevronRightIcon className="w-4 h-4 mx-2 text-gray-400" />
-          <Link 
-            to={`/products?category=${product.category}`}
-            className="hover:text-green-600 transition-colors whitespace-nowrap"
-          >
-            {product.category}
-          </Link>
-          <ChevronRightIcon className="w-4 h-4 mx-2 text-gray-400" />
+          <ChevronRightIcon className="w-4 h-4 mx-2 text-gray-400 flex-shrink-0" />
+          {product.category && (
+            <>
+              <Link 
+                to={`/products?category=${encodeURIComponent(product.category)}`}
+                className="hover:text-green-600 transition-colors whitespace-nowrap"
+              >
+                {product.category}
+              </Link>
+              <ChevronRightIcon className="w-4 h-4 mx-2 text-gray-400 flex-shrink-0" />
+            </>
+          )}
           <span className="text-gray-800 font-medium truncate max-w-[200px]">
             {product.name}
           </span>
@@ -227,22 +252,29 @@ export default function ProductDetailPage() {
             {/* Galerie d'images */}
             <div className="space-y-4">
               <div className="relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl overflow-hidden group">
-                <motion.img
-                  key={selectedImage}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.3 }}
-                  src={images[selectedImage]}
-                  alt={product.name}
-                  className="w-full h-[500px] object-cover group-hover:scale-105 transition-transform duration-500"
-                />
+                {images.length > 0 && !imageError ? (
+                  <motion.img
+                    key={selectedImage}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                    src={images[selectedImage]}
+                    alt={product.name}
+                    className="w-full h-[500px] object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  <div className="w-full h-[500px] flex items-center justify-center bg-gray-100">
+                    <Leaf className="w-24 h-24 text-gray-300" />
+                  </div>
+                )}
                 <div className="absolute top-4 left-4 bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
                   <Sparkles size={14} />
                   Éco-friendly
                 </div>
               </div>
               
-              {images.length > 1 && (
+              {images.length > 1 && !imageError && (
                 <div className="grid grid-cols-4 gap-3">
                   {images.map((img, idx) => (
                     <motion.button
@@ -256,14 +288,21 @@ export default function ProductDetailPage() {
                           : 'border-transparent hover:border-gray-300'
                       }`}
                     >
-                      <img src={img} alt={`Vue ${idx + 1}`} className="w-full h-24 object-cover" />
+                      <img 
+                        src={img} 
+                        alt={`Vue ${idx + 1}`} 
+                        className="w-full h-24 object-cover"
+                        onError={(e) => {
+                          e.target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-size='14' text-anchor='middle' dy='.3em' fill='%23999'%3E${idx+1}%3C/text%3E%3C/svg%3E`;
+                        }}
+                      />
                     </motion.button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Informations produit */}
+            {/* Informations produit - le reste du code reste identique à votre version */}
             <div className="space-y-6">
               <div>
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
@@ -539,7 +578,7 @@ export default function ProductDetailPage() {
                 Vous pourriez aussi aimer
               </h2>
               <Link 
-                to={`/products?category=${product.category}`}
+                to={`/products?category=${encodeURIComponent(product.category || '')}`}
                 className="text-green-600 hover:text-green-700 font-medium flex items-center gap-1"
               >
                 Voir tout
@@ -555,25 +594,5 @@ export default function ProductDetailPage() {
         )}
       </div>
     </div>
-  );
-}
-
-// Composant helper pour l'icône ChevronRight
-function ChevronRightIcon(props) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
   );
 }

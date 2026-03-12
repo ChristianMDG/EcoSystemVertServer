@@ -1,65 +1,62 @@
 import { Link } from 'react-router-dom';
-import { useState } from 'react';
-import { StarIcon } from '@heroicons/react/24/solid';
+import { ShoppingCart } from 'lucide-react';
+import { useCart } from '../context/CartContext';
 
-export default function ProductCard({ product }) {
-  const [imgError, setImgError] = useState(false);
+// Configuration de l'URL de base
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  const imageUrl = product.image?.startsWith('http')
-    ? product.image
-    : `${import.meta.env.VITE_API_URL}${product.image || product.imageUrl}`;
+const ProductCard = ({ product }) => {
+  const { addItem } = useCart();
 
-  const fallbackImage = 'https://via.placeholder.com/400x300?text=Image+non+disponible';
+  // Fonction pour obtenir l'URL de l'image
+  const getImageUrl = () => {
+    if (product.imageUrl) return product.imageUrl;
+    if (product.image) {
+      if (product.image.startsWith('http')) return product.image;
+      if (product.image.startsWith('/uploads')) return `${API_URL}${product.image}`;
+      return `${API_URL}/uploads/products/${product.image}`;
+    }
+    // Image par défaut (placeholder SVG)
+    return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-size='14' text-anchor='middle' dy='.3em' fill='%23999' font-family='Arial'%3E${product.name?.charAt(0) || '?'}%3C/text%3E%3C/svg%3E`;
+  };
 
-  // Note fictive (à remplacer par une vraie note)
-  const rating = (Math.random() * 2 + 3).toFixed(1);
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    addItem(product.id, 1);
+  };
 
   return (
     <Link to={`/products/${product.id}`} className="group">
-      <div className="relative bg-white rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-xl">
-        {/* Image */}
-        <div className="aspect-w-4 aspect-h-3 bg-gray-100">
+      <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition overflow-hidden">
+        <div className="aspect-square overflow-hidden bg-gray-100">
           <img
-            src={imgError ? fallbackImage : imageUrl}
+            src={getImageUrl()}
             alt={product.name}
-            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={() => setImgError(true)}
+            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-size='14' text-anchor='middle' dy='.3em' fill='%23999' font-family='Arial'%3E${product.name?.charAt(0) || '?'}%3C/text%3E%3C/svg%3E`;
+            }}
           />
         </div>
-
-        {/* Contenu */}
         <div className="p-4">
-          <div className="flex items-start justify-between">
-            <h3 className="text-lg font-semibold text-gray-800 line-clamp-2 flex-1">
-              {product.name}
-            </h3>
-            <div className="flex items-center gap-1 ml-2">
-              <StarIcon className="h-4 w-4 text-yellow-400" />
-              <span className="text-sm text-gray-600">{rating}</span>
-            </div>
-          </div>
-
-          <p className="text-sm text-gray-500 mt-1 line-clamp-2">
-            {product.description}
-          </p>
-
-          <div className="mt-3 flex items-center justify-between">
-            <span className="text-green-600 font-bold text-lg">
-              {product.price.toLocaleString()} Ar
+          <h3 className="font-semibold text-gray-800 mb-1 line-clamp-1">{product.name}</h3>
+          <p className="text-sm text-gray-500 mb-2 line-clamp-2">{product.description}</p>
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-bold text-green-600">
+              {product.price?.toLocaleString()} Ar
             </span>
-            {product.category && (
-              <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
-                {product.category}
-              </span>
-            )}
+            <button
+              onClick={handleAddToCart}
+              className="p-2 bg-green-600 text-white rounded-full hover:bg-green-700 transition"
+            >
+              <ShoppingCart size={18} />
+            </button>
           </div>
-        </div>
-
-        {/* Badge "Éco" */}
-        <div className="absolute top-3 left-3 bg-green-500 text-white text-xs px-2 py-1 rounded-full shadow">
-          Éco-friendly
         </div>
       </div>
     </Link>
   );
-}
+};
+
+export default ProductCard;

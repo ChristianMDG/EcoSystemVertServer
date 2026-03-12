@@ -83,41 +83,43 @@ export const updateCartItem = (productId, quantity) =>
 export const removeFromCart = (productId) => 
   api.delete(`/cart/items/${productId}`);
 export const clearCart = () => api.delete('/cart');
-export const checkout = () => api.post('/cart/checkout');
+
+// CORRECTION ICI : Ajouter les paramètres deliveryDetails
+export const checkout = (deliveryDetails) => api.post('/cart/checkout', deliveryDetails);
 
 // ========================================
 // ORDERS
 // ========================================
-export const createOrder = (products) => api.post('/orders', { products });
+export const createOrder = (orderData) => api.post('/orders', orderData);
 export const getOrders = () => api.get('/orders');
 export const getOrderById = (id) => api.get(`/orders/${id}`);
-
-
+export const cancelOrder = (orderId) => api.post(`/orders/${orderId}/cancel`);
 
 // ========================================
 // ENERGY SIMULATOR
 // ========================================
 
 // Créer une simulation
-export const createSimulation = (data) => api.post('/energy/simulations', data);
+export const createSimulation = (data) => api.post('/simulations', data);
 
 // Récupérer toutes les simulations de l'utilisateur
-export const getUserSimulations = (params) => api.get('/energy/simulations', { params });
+export const getUserSimulations = (params) => api.get('/simulations', { params });
 
 // Récupérer une simulation spécifique
-export const getSimulationById = (id) => api.get(`/energy/simulations/${id}`);
+export const getSimulationById = (id) => api.get(`/simulations/${id}`);
 
 // Supprimer une simulation
-export const deleteSimulation = (id) => api.delete(`/energy/simulations/${id}`);
+export const deleteSimulation = (id) => api.delete(`/simulations/${id}`);
 
 // Obtenir les statistiques de l'utilisateur
-export const getUserEnergyStats = () => api.get('/energy/simulations/stats');
+export const getUserEnergyStats = () => api.get('/simulations/stats');
 
 // Ajouter un feedback
 export const addSimulationFeedback = (simulationId, data) => 
-  api.post(`/energy/simulations/${simulationId}/feedback`, data);
+  api.post(`/simulations/${simulationId}/feedback`, data);
 
 // Obtenir des conseils personnalisés (optionnel)
 export const getEnergyTips = (localisation, consommation) => 
   api.get('/energy/tips', { params: { localisation, consommation } });
+
 export default api;

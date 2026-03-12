@@ -13,9 +13,15 @@ import {
   MapPin,
   User,
   Mail,
-  Download
+  Download,
+  Phone,
+  MessageSquare,
+  Image as ImageIcon
 } from "lucide-react";
 import { getOrderById } from "../services/api";
+
+// Configuration de l'URL de base pour les images
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
 export default function OrderDetailPage() {
   const { id } = useParams();
@@ -23,6 +29,7 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [imageErrors, setImageErrors] = useState({});
 
   useEffect(() => {
     fetchOrder();
@@ -40,6 +47,24 @@ export default function OrderDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Fonction pour obtenir l'URL complète de l'image
+  const getImageUrl = (product) => {
+    if (!product?.image) return null;
+    
+    // Si l'image est déjà une URL complète
+    if (product.image.startsWith('http')) {
+      return product.image;
+    }
+    
+    // Si l'image commence par /uploads
+    if (product.image.startsWith('/uploads')) {
+      return `${API_URL}${product.image}`;
+    }
+    
+    // Sinon, on suppose que c'est le nom du fichier
+    return `${API_URL}/uploads/products/${product.image}`;
   };
 
   const getStatusIcon = (status) => {
@@ -106,6 +131,12 @@ export default function OrderDetailPage() {
     return price?.toLocaleString() + ' Ar' || '0 Ar';
   };
 
+  // Fallback SVG pour les images
+  const getFallbackImage = (productName) => {
+    const firstChar = productName?.charAt(0) || '?';
+    return `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f0f0f0'/%3E%3Ctext x='50' y='50' font-size='14' text-anchor='middle' dy='.3em' fill='%23999' font-family='Arial'%3E${firstChar}%3C/text%3E%3C/svg%3E`;
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
@@ -156,11 +187,11 @@ export default function OrderDetailPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">
-                  Commande #{order.id.slice(-8)}
+                  Commande #{order.id?.slice(-8) || 'N/A'}
                 </h1>
                 <p className="text-gray-500 flex items-center gap-2 mt-1">
                   <Calendar size={16} />
-                  {formatDate(order.createdAt)}
+                  {order.createdAt ? formatDate(order.createdAt) : 'Date inconnue'}
                 </p>
               </div>
             </div>
@@ -178,41 +209,44 @@ export default function OrderDetailPage() {
                 Articles commandés
               </h2>
               <div className="space-y-4">
-                {order.items?.map((item) => (
-                  <div key={item.id} className="flex gap-4 pb-4 border-b border-gray-100 last:border-0">
-                    <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
-                      <img
-                        src={item.product?.image?.startsWith('http')
-                          ? item.product.image
-                          : `${import.meta.env.VITE_API_URL}${item.product?.image || ''}`
-                        }
-                        alt={item.product?.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/80x80?text=Produit';
-                        }}
-                      />
+                {order.items?.map((item) => {
+                  const imageUrl = getImageUrl(item.product);
+                  const fallbackSrc = getFallbackImage(item.product?.name);
+                  
+                  return (
+                    <div key={item.id} className="flex gap-4 pb-4 border-b border-gray-100 last:border-0">
+                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                        <img
+                          src={imageUrl || fallbackSrc}
+                          alt={item.product?.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = fallbackSrc;
+                          }}
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <Link to={`/products/${item.product?.id}`}>
+                          <h3 className="font-medium text-gray-800 hover:text-green-600 transition">
+                            {item.product?.name || 'Produit'}
+                          </h3>
+                        </Link>
+                        <p className="text-sm text-gray-500 mt-1">
+                          Quantité: {item.quantity}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Prix unitaire: {formatPrice(item.price)}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-bold text-green-600">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <Link to={`/products/${item.product?.id}`}>
-                        <h3 className="font-medium text-gray-800 hover:text-green-600 transition">
-                          {item.product?.name}
-                        </h3>
-                      </Link>
-                      <p className="text-sm text-gray-500 mt-1">
-                        Quantité: {item.quantity}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        Prix unitaire: {formatPrice(item.price)}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">
-                        {formatPrice(item.price * item.quantity)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Total */}
@@ -245,20 +279,47 @@ export default function OrderDetailPage() {
                   <Mail size={18} className="text-green-600 mt-1" />
                   <div>
                     <p className="text-sm text-gray-500">Email</p>
-                    <p className="font-medium">{order.user?.email || 'Non spécifié'}</p>
+                    <p className="font-medium break-all">{order.user?.email || 'Non spécifié'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <MapPin size={18} className="text-green-600 mt-1" />
                   <div>
                     <p className="text-sm text-gray-500">Adresse de livraison</p>
-                    <p className="font-medium">À déterminer</p>
+                    <p className="font-medium">{order.deliveryAddress || 'Non spécifiée'}</p>
                   </div>
                 </div>
+                <div className="flex items-start gap-3">
+                  <Phone size={18} className="text-green-600 mt-1" />
+                  <div>
+                    <p className="text-sm text-gray-500">Téléphone</p>
+                    <p className="font-medium">{order.phoneNumber || 'Non spécifié'}</p>
+                  </div>
+                </div>
+                {order.deliveryNotes && (
+                  <div className="flex items-start gap-3">
+                    <MessageSquare size={18} className="text-green-600 mt-1" />
+                    <div>
+                      <p className="text-sm text-gray-500">Instructions</p>
+                      <p className="font-medium text-sm">{order.deliveryNotes}</p>
+                    </div>
+                  </div>
+                )}
                 <div className="mt-4 pt-4 border-t border-gray-100">
                   <p className="text-sm text-green-600 flex items-center gap-2">
                     <Truck size={16} />
-                    Livraison gratuite
+                    {order.paymentMethod === 'CASH_ON_DELIVERY' 
+                      ? 'Paiement à la livraison' 
+                      : 'Mode de paiement: ' + (order.paymentMethod || 'Non spécifié')}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Statut du paiement: {
+                      order.paymentStatus === 'PAID' ? 'Payé' :
+                      order.paymentStatus === 'PENDING' ? 'En attente' :
+                      order.paymentStatus === 'FAILED' ? 'Échoué' :
+                      order.paymentStatus === 'REFUNDED' ? 'Remboursé' :
+                      'Non spécifié'
+                    }
                   </p>
                 </div>
               </div>

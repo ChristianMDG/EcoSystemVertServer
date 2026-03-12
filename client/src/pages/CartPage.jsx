@@ -125,7 +125,6 @@ export default function CartPage() {
     updateQuantity, 
     removeItem, 
     emptyCart,
-    checkoutCart,
     setDeliveryZone,
     setDeliveryMethod,
     DELIVERY,
@@ -208,35 +207,14 @@ export default function CartPage() {
       navigate('/login?redirect=/cart');
       return;
     }
-
-    setConfirmModal({
-      isOpen: true,
-      type: 'success',
-      title: 'Confirmer la commande',
-      message: `Voulez-vous confirmer votre commande d'un montant total de ${totalWithDelivery.toLocaleString()} Ar ?`,
-      confirmText: 'Confirmer',
-      action: async () => {
-        setCheckoutLoading(true);
-        setError(null);
-        
-        try {
-          const deliveryData = {
-            zone: deliveryInfo.zone,
-            method: deliveryInfo.method,
-            fee: deliveryInfo.fee
-          };
-          
-          const order = await checkoutCart(deliveryData);
-          setSuccessMessage('Commande passée avec succès !');
-          
-          setTimeout(() => {
-            navigate('/orders');
-          }, 2000);
-        } catch (err) {
-          setError(err.response?.data?.error || 'Erreur lors de la commande');
-        } finally {
-          setCheckoutLoading(false);
-        }
+  
+    // Rediriger vers la page de checkout avec les infos de livraison
+    navigate('/checkout', {
+      state: {
+        cartTotal,
+        deliveryInfo,
+        totalWithDelivery,
+        itemCount
       }
     });
   };

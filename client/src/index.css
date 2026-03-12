@@ -1,1 +1,58 @@
 @import "tailwindcss";
+
+@keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Pour les graphiques */
+  .recharts-wrapper {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  .recharts-tooltip-wrapper {
+    outline: none;
+  }
+
+
+  /* Transitions pour le thème */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.2s ease;
+}
+
+/* Styles de base pour le mode sombre */
+.dark {
+  color-scheme: dark;
+}
+
+.dark body {
+  background-color: #111827;
+  color: #f3f4f6;
+}
+
+/* Personnalisation de la scrollbar pour le mode sombre */
+.dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 5px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
+}

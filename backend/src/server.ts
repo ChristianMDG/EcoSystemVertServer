@@ -36,12 +36,6 @@ const startServer = async () => {
   try {
     app.listen(PORT, () => {
       console.log(`✅ Serveur démarré sur http://localhost:${PORT}`);
-      console.log(`📦 Routes disponibles:`);
-      console.log(`   - Auth: http://localhost:${PORT}/auth/*`);
-      console.log(`   - Products: http://localhost:${PORT}/products`);
-      console.log(`   - Orders: http://localhost:${PORT}/orders`);
-      console.log(`   - Cart: http://localhost:${PORT}/cart`);
-      console.log(`   - Health: http://localhost:${PORT}/health`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

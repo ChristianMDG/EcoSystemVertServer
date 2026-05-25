@@ -149,22 +149,27 @@ export const updateMyQuoteStatusController = async (req: Request, res: Response)
     const { id } = req.params;
     const { status } = req.body;
 
-    // Le client ne peut qu'accepter ou refuser
+    const isAdmin = req.user.role === "admin";
+
+    // Le client ne peut qu'accepter ou refuser ; l'admin peut tout statut
     const allowedForClient = [QuoteStatus.ACCEPTED, QuoteStatus.REJECTED];
-    if (!allowedForClient.includes(status)) {
+    const allowedForAdmin = Object.values(QuoteStatus);
+    const allowed = isAdmin ? allowedForAdmin : allowedForClient;
+
+    if (!allowed.includes(status)) {
       return res.status(400).json({
         success: false,
-        error: `Action non autorisée. Valeurs acceptées : ${allowedForClient.join(", ")}`
+        error: `Statut invalide. Valeurs acceptées : ${allowed.join(", ")}`
       });
     }
 
-    // Vérifier que le devis appartient au client
-    const existing = await quoteService.getQuoteById(id, req.user.userId, false);
+    // Vérifier que le devis existe (admin voit tout, client voit seulement le sien)
+    const existing = await quoteService.getQuoteById(id, req.user.userId, isAdmin);
     if (!existing) {
       return res.status(404).json({ success: false, error: "Devis introuvable" });
     }
 
-    if (existing.status === QuoteStatus.EXPIRED) {
+    if (!isAdmin && existing.status === QuoteStatus.EXPIRED) {
       return res.status(400).json({ success: false, error: "Ce devis est expiré" });
     }
 

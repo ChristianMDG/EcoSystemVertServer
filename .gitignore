@@ -29,7 +29,7 @@ yarn-error.log*
 # Prisma
 prisma/*.db
 prisma/*.db-journal
-prisma/migrations/
+# prisma/migrations/ -- keep migrations in git for deploy
 
 # Uploads
 uploads/

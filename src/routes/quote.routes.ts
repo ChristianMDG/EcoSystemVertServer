@@ -49,11 +49,11 @@ router.get(
   getQuoteByIdController
 );
 
-// Accepter / Refuser un devis (client uniquement)
+// Accepter / Refuser un devis (client et admin)
 router.patch(
   "/quotes/:id/status",
   authMiddleware,
-  authorize(["client"]),
+  authorize(["client", "admin"]),
   updateMyQuoteStatusController
 );
 

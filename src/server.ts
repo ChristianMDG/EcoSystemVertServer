@@ -4,6 +4,7 @@ import authRoutes from './routes/auth.routes';
 import productRoutes from './routes/product.routes';
 import orderRoutes from './routes/order.routes';
 import cartRoutes from "./routes/cart.routes";
+import quoteRoutes from "./routes/quote.routes";
 import { env } from './config/env';
 import adminRoutes from "./routes/admin.routes";
 declare global {
@@ -23,7 +24,8 @@ app.use(authRoutes);
 app.use(productRoutes);
 app.use(orderRoutes);
 app.use(cartRoutes);
-app.use('/api', adminRoutes);
+app.use(quoteRoutes); // client quote routes: /quotes/...
+app.use('/api', adminRoutes); // admin routes including /api/admin/quotes/...
 
 
 app.get('/health', (_req: Request, res: Response) => {

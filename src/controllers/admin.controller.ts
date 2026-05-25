@@ -15,7 +15,6 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
       recentOrders,
       pendingOrders,
       lowStockProducts,
-      totalSimulations
     ] = await Promise.all([
       prisma.user.count(),
       prisma.product.count(),
@@ -37,7 +36,6 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
       prisma.product.count({
         where: { stock: { lt: 10 } }
       }),
-      prisma.energySimulation.count()
     ]);
 
     return res.json({
@@ -49,7 +47,6 @@ export const getDashboardStats = async (_req: Request, res: Response) => {
         revenue: totalRevenue._sum.total || 0,
         pendingOrders,
         lowStockProducts,
-        simulations: totalSimulations,
         recentOrders
       }
     });
@@ -520,12 +517,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
           email: true,
           role: true,
           createdAt: true,
-          _count: {
-            select: {
-              orders: true,
-              energySimulations: true
-            }
-          }
         }
       }),
       prisma.user.count({ where })
@@ -560,16 +551,6 @@ export const getUserDetails = async (req: Request, res: Response) => {
           take: 5,
           orderBy: { createdAt: 'desc' }
         },
-        energySimulations: {
-          take: 5,
-          orderBy: { createdAt: 'desc' }
-        },
-        _count: {
-          select: {
-            orders: true,
-            energySimulations: true
-          }
-        }
       }
     });
 
@@ -646,95 +627,6 @@ export const deleteUser = async (req: Request, res: Response) => {
     return res.json({
       success: true,
       message: "Utilisateur supprimé avec succès"
-    });
-
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-// ==================== GESTION DES SIMULATIONS ÉNERGÉTIQUES ====================
-export const getAllSimulations = async (req: Request, res: Response) => {
-  try {
-    const { page = 1, limit = 10, search } = req.query;
-    
-    const skip = (Number(page) - 1) * Number(limit);
-    const where: any = {};
-
-    if (search) {
-      where.OR = [
-        { user: { name: { contains: search as string, mode: 'insensitive' } } },
-        { user: { email: { contains: search as string, mode: 'insensitive' } } },
-        { localisation: { contains: search as string, mode: 'insensitive' } }
-      ];
-    }
-
-    const [simulations, total] = await Promise.all([
-      prisma.energySimulation.findMany({
-        where,
-        skip,
-        take: Number(limit),
-        orderBy: { createdAt: 'desc' },
-        include: {
-          user: { select: { name: true, email: true } },
-          feedbacks: true
-        }
-      }),
-      prisma.energySimulation.count({ where })
-    ]);
-
-    return res.json({
-      success: true,
-      data: {
-        simulations,
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit))
-        }
-      }
-    });
-
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-export const getSimulationDetails = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    const simulation = await prisma.energySimulation.findUnique({
-      where: { id },
-      include: {
-        user: true,
-        feedbacks: {
-          include: { user: { select: { name: true } } }
-        }
-      }
-    });
-
-    if (!simulation) {
-      return res.status(404).json({ success: false, error: "Simulation non trouvée" });
-    }
-
-    return res.json({ success: true, data: simulation });
-
-  } catch (error: any) {
-    return res.status(500).json({ success: false, error: error.message });
-  }
-};
-
-export const deleteSimulation = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-
-    await prisma.energySimulation.delete({ where: { id } });
-
-    return res.json({
-      success: true,
-      message: "Simulation supprimée avec succès"
     });
 
   } catch (error: any) {

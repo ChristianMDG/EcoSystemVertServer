@@ -59,8 +59,7 @@ model User {
   refreshTokens      RefreshToken[]
   orders             Order[]
   cart               Cart?
-  energySimulations  EnergySimulation[]
-  simulationFeedbacks SimulationFeedback[]
+  quotes             Quote[]
 
   @@map("users")
 }
@@ -124,8 +123,78 @@ model Product {
   // Relations
   orderItems  OrderItem[]
   cartItems   CartItem[]
+  quoteItems  QuoteItem[]
 
   @@map("products")
+}
+
+// ========================================
+// MODULE DEVIS (QUOTES)
+// ========================================
+
+enum EnergyType {
+  SOLAR
+  WIND
+  HYBRID
+  HYDRO
+  BIOMASS
+}
+
+enum QuoteStatus {
+  PENDING
+  GENERATED
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model Quote {
+  id                String      @id @default(uuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Besoins du client
+  energyType        EnergyType
+  usageDescription  String      // description libre des besoins
+  location          String      // localisation (impact ensoleillement etc.)
+  monthlyBudget     Float?      // budget mensuel estimé (optionnel)
+  surfaceArea       Float?      // surface en m² (optionnel)
+  dailyConsumption  Float?      // consommation journalière en Wh (optionnel)
+  numberOfPeople    Int?        // nombre de personnes
+  hasExistingSystem Boolean     @default(false)
+  additionalNotes   String?
+  
+  // Résultat généré par l'IA
+  status            QuoteStatus @default(PENDING)
+  estimatedMinPrice Float?      // fourchette basse
+  estimatedMaxPrice Float?      // fourchette haute
+  recommendedPower  Float?      // puissance recommandée en kW
+  aiAnalysis        String?     // analyse complète de l'IA
+  validUntil        DateTime?   // date d'expiration du devis
+  
+  // Relations
+  items             QuoteItem[]
+  
+  createdAt         DateTime    @default(now()) @map("created_at")
+  updatedAt         DateTime    @updatedAt
+
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id          String   @id @default(uuid())
+  quoteId     String
+  quote       Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  quantity    Int
+  unitPrice   Float
+  reason      String?  // pourquoi ce produit est recommandé
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("quote_items")
 }
 
 // ========================================

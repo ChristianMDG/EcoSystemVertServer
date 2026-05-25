@@ -5,6 +5,7 @@ import { env } from './config/env';
 import productRoutes from './routes/product.routes';
 import orderRoutes from './routes/order.routes';
 import cartRoutes from "./routes/cart.routes";
+import quoteRoutes from "./routes/quote.routes";
 
 declare global {
   namespace Express {
@@ -20,6 +21,7 @@ app.use(authRoutes);
 app.use(productRoutes);
 app.use(orderRoutes);
 app.use(cartRoutes);
+app.use(quoteRoutes);
 
 app.get('/health', (_req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'API is healthy' });

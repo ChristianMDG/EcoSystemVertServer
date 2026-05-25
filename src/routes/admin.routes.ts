@@ -1,4 +1,8 @@
 import { Router } from "express";
+import {
+  adminGetAllQuotesController,
+  adminUpdateQuoteStatusController
+} from "../controllers/quote.controller";
 import * as adminController from "../controllers/admin.controller";
 import { authMiddleware } from "../middlewares/auth.middleware";
 import { authorize } from "../middlewares/role.middleware";
@@ -35,9 +39,10 @@ router.put("/admin/users/:id/role", adminController.updateUserRole);
 router.put("/admin/users/:id/status", adminController.toggleUserStatus);
 router.delete("/admin/users/:id", adminController.deleteUser);
 
-// ==================== GESTION DES SIMULATIONS ÉNERGÉTIQUES ====================
-router.get("/admin/simulations", adminController.getAllSimulations);
-router.get("/admin/simulations/:id", adminController.getSimulationDetails);
-router.delete("/admin/simulations/:id", adminController.deleteSimulation);
+
+
+// ==================== GESTION DES DEVIS ====================
+router.get("/admin/quotes", adminGetAllQuotesController);
+router.patch("/admin/quotes/:id/status", adminUpdateQuoteStatusController);
 
 export default router;
